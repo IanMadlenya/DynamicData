@@ -1285,16 +1285,16 @@ namespace DynamicData
                     switch (item.Reason)
                     {
                         case ChangeReason.Add:
-                        {
-                            target.Add(item.Current);
-                        }
+                            {
+                                target.Add(item.Current);
+                            }
                             break;
 
                         case ChangeReason.Update:
-                        {
-                            target.Remove(item.Previous.Value);
-                            target.Add(item.Current);
-                        }
+                            {
+                                target.Remove(item.Previous.Value);
+                                target.Add(item.Current);
+                            }
                             break;
                         case ChangeReason.Remove:
                             target.Remove(item.Current);
@@ -2484,7 +2484,7 @@ namespace DynamicData
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
-            
+
             return Observable.Create<IChangeSet<TDestination, TKey>>(observer =>
             {
                 var transformer = new Transformer<TDestination, TSource, TKey>(null);
@@ -2583,11 +2583,11 @@ namespace DynamicData
         private static IObservable<IChangeSet<TDestination, TDestinationKey>> FlattenWithSingleParent<TDestination, TDestinationKey, TSource, TSourceKey>(this IObservable<IChangeSet<TSource, TSourceKey>> source,
                                                                  Func<TSource, IEnumerable<TDestination>> manyselector, Func<TDestination, TDestinationKey> keySelector)
         {
-            return new TransformMany<TDestination, TDestinationKey, TSource, TSourceKey>(source, manyselector,keySelector).Run();
+            return new TransformMany<TDestination, TDestinationKey, TSource, TSourceKey>(source, manyselector, keySelector).Run();
         }
 
         #endregion
-        
+
         #region Transform safe
 
         /// <summary>
@@ -2759,7 +2759,7 @@ namespace DynamicData
         }
 
         #endregion
-         
+
         #region Distinct values
 
         /// <summary>
@@ -3342,48 +3342,6 @@ namespace DynamicData
         }
         #endregion
 
-        #region Edit
 
-        /// <summary>
-        /// Loads the cache with the specified items in an optimised manner i.e. calculates the differences between the old and new items
-        ///  in the list and amends only the differences
-        /// </summary>
-        /// <typeparam name="TObject">The type of the object.</typeparam>
-        /// <typeparam name="TKey">The type of the key.</typeparam>
-        /// <param name="source">The source.</param>
-        /// <param name="alltems"></param>
-        /// <param name="equalityComparer">The equality comparer used to determine whether an item has changed</param>
-        /// <exception cref="System.ArgumentNullException">source</exception>
-        public static void EditDiff<TObject, TKey>([NotNull] this ISourceCache<TObject, TKey> source,
-            [NotNull] IEnumerable<TObject> alltems,
-            [NotNull] IEqualityComparer<TObject> equalityComparer)
-        {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (alltems == null) throw new ArgumentNullException(nameof(alltems));
-            if (equalityComparer == null) throw new ArgumentNullException(nameof(equalityComparer));
-            source.EditDiff(alltems, equalityComparer.Equals);
-        }
-
-        /// <summary>
-        /// Loads the cache with the specified items in an optimised manner i.e. calculates the differences between the old and new items
-        ///  in the list and amends only the differences
-        /// </summary>
-        /// <typeparam name="TObject">The type of the object.</typeparam>
-        /// <typeparam name="TKey">The type of the key.</typeparam>
-        /// <param name="source">The source.</param>
-        /// <param name="alltems"></param>
-        /// <param name="hasItemChanged">Expression to determine whether an item's value has changed. eg (current, previous) => current.Version != previous.Version</param>
-        /// <exception cref="System.ArgumentNullException">source</exception>
-        public static void EditDiff<TObject, TKey>([NotNull] this ISourceCache<TObject, TKey> source,
-            [NotNull] IEnumerable<TObject> alltems,
-            [NotNull] Func<TObject, TObject, bool> hasItemChanged)
-        {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (alltems == null) throw new ArgumentNullException(nameof(alltems));
-            if (hasItemChanged == null) throw new ArgumentNullException(nameof(hasItemChanged));
-            var editDiff = new EditDiff<TObject, TKey>(source, hasItemChanged);
-            editDiff.Edit(alltems);
-        }
-        #endregion
     }
 }
