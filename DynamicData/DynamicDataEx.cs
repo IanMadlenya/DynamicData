@@ -11,6 +11,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using DynamicData.Annotations;
 using DynamicData.Binding;
+using DynamicData.Cache;
 using DynamicData.Cache.Internal;
 using DynamicData.Controllers;
 using DynamicData.Internal;
@@ -3338,6 +3339,50 @@ namespace DynamicData
         {
             if (right == null) throw new ArgumentNullException(nameof(right));
             return new RightJoin<TLeft, TLeftKey, TRight, TRightKey, TDestination>(left, right, rightKeySelector, resultSelector).Run();
+        }
+        #endregion
+
+        #region Edit
+
+        /// <summary>
+        /// Loads the cache with the specified items in an optimised manner i.e. calculates the differences between the old and new items
+        ///  in the list and amends only the differences
+        /// </summary>
+        /// <typeparam name="TObject">The type of the object.</typeparam>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="alltems"></param>
+        /// <param name="equalityComparer">The equality comparer used to determine whether an item has changed</param>
+        /// <exception cref="System.ArgumentNullException">source</exception>
+        public static void EditDiff<TObject, TKey>([NotNull] this ISourceCache<TObject, TKey> source,
+            [NotNull] IEnumerable<TObject> alltems,
+            [NotNull] IEqualityComparer<TObject> equalityComparer)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (alltems == null) throw new ArgumentNullException(nameof(alltems));
+            if (equalityComparer == null) throw new ArgumentNullException(nameof(equalityComparer));
+            source.EditDiff(alltems, equalityComparer.Equals);
+        }
+
+        /// <summary>
+        /// Loads the cache with the specified items in an optimised manner i.e. calculates the differences between the old and new items
+        ///  in the list and amends only the differences
+        /// </summary>
+        /// <typeparam name="TObject">The type of the object.</typeparam>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="alltems"></param>
+        /// <param name="hasItemChanged">Expression to determine whether an item's value has changed. eg (current, previous) => current.Version != previous.Version</param>
+        /// <exception cref="System.ArgumentNullException">source</exception>
+        public static void EditDiff<TObject, TKey>([NotNull] this ISourceCache<TObject, TKey> source,
+            [NotNull] IEnumerable<TObject> alltems,
+            [NotNull] Func<TObject, TObject, bool> hasItemChanged)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (alltems == null) throw new ArgumentNullException(nameof(alltems));
+            if (hasItemChanged == null) throw new ArgumentNullException(nameof(hasItemChanged));
+            var editDiff = new EditDiff<TObject, TKey>(source, hasItemChanged);
+            editDiff.Edit(alltems);
         }
         #endregion
     }

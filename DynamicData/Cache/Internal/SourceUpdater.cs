@@ -32,6 +32,16 @@ namespace DynamicData.Internal
             return item.HasValue ? item.Value : Optional.None<TObject>();
         }
 
+        public void AddOrUpdate(KeyValuePair<TKey, TObject> item)
+        {
+            _cache.AddOrUpdate(item.Value, item.Key);
+        }
+
+        public void AddOrUpdate(IEnumerable<KeyValuePair<TKey, TObject>> itemsPairs)
+        {
+            itemsPairs.ForEach(AddOrUpdate);
+        }
+
         public TKey GetKey(TObject item)
         {
             if (_keySelector == null)

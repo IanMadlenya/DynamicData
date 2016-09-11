@@ -29,6 +29,18 @@ namespace DynamicData
         void AddOrUpdate(IEnumerable<TObject> items);
 
         /// <summary>
+        /// Adds or updates the specified item using the specified key
+        /// </summary>
+        /// <param name="item">The item.</param>
+        void AddOrUpdate(KeyValuePair<TKey, TObject> item);
+
+        /// <summary>
+        /// Adds or update the specified items using the specified key
+        /// </summary>
+        /// <param name="items">The items.</param>
+        void AddOrUpdate(IEnumerable<KeyValuePair<TKey, TObject>> items);
+
+        /// <summary>
         /// Adds or update the item, 
         /// </summary>
         /// <param name="item">The item.</param>
