@@ -32,6 +32,24 @@ namespace DynamicData.Internal
             return item.HasValue ? item.Value : Optional.None<TObject>();
         }
 
+        public TKey GetKey(TObject item)
+        {
+            if (_keySelector == null)
+                throw new KeySelectorException("A key selector must be specified");
+
+            return _keySelector.GetKey(item);
+        }
+
+
+        public IEnumerable<KeyValuePair<TKey, TObject>> GetKeyValues(IEnumerable<TObject> items)
+        {
+            if (_keySelector == null)
+                throw new KeySelectorException("A key selector must be specified");
+
+            return items.Select(t => new KeyValuePair<TKey, TObject>(_keySelector.GetKey(t), t));
+        }
+
+
         public void Load(IEnumerable<TObject> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));

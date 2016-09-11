@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DynamicData.Internal;
 using DynamicData.Kernel;
 
 namespace DynamicData
@@ -26,6 +27,7 @@ namespace DynamicData
             var item = _cache.Lookup(key);
             return item.HasValue ? item.Value : Optional.None<TObject>();
         }
+
 
         public void Load(IEnumerable<TObject> items, Func<TObject, TKey> keySelector)
         {

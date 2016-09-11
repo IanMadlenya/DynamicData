@@ -108,5 +108,19 @@ namespace DynamicData
         /// Updates using changes using the specified changeset
         /// </summary>
         void Update(IChangeSet<TObject, TKey> changes);
+
+        /// <summary>
+        /// Gets the key for the specified item
+        /// </summary>
+        /// <param name="item">The item.</param>
+        /// <returns></returns>
+        TKey GetKey(TObject item);
+
+        /// <summary>
+        /// Gets the key values for the specified items
+        /// </summary>
+        /// <param name="items">The items.</param>
+        /// <returns></returns>
+        IEnumerable<KeyValuePair<TKey, TObject>> GetKeyValues(IEnumerable<TObject> items);
     }
 }
