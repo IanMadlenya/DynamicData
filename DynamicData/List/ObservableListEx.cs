@@ -464,7 +464,7 @@ namespace DynamicData
         /// filterController</exception>
         public static IObservable<IChangeSet<T>> Filter<T>([NotNull] this IObservable<IChangeSet<T>> source,
                                                            [NotNull] IObservable<Func<T, bool>> predicate,
-                                                           FilterPolicy filterPolicy = FilterPolicy.ClearAndReplace)
+                                                           FilterPolicy filterPolicy = FilterPolicy.CalculateDiffSet)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (predicate == null) throw new ArgumentNullException(nameof(predicate));
