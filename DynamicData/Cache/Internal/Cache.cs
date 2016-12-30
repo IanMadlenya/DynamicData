@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.Cache.Internal
 {
     internal class Cache<TObject, TKey> : ICache<TObject, TKey>
     {
@@ -13,9 +13,18 @@ namespace DynamicData.Internal
         public IEnumerable<TObject> Items => _data.Values;
         public IEnumerable<TKey> Keys => _data.Keys;
 
-        public Cache()
+        public static Cache<TObject, TKey> Empty = new Cache<TObject, TKey>();
+
+        public Cache(int capacity = -1)
         {
-            _data = new Dictionary<TKey, TObject>();
+            if (capacity > 1)
+            {
+                _data = new Dictionary<TKey, TObject>(capacity);
+            }
+            else
+            {
+                _data = new Dictionary<TKey, TObject>();
+            }
         }
 
         public void Clone(IChangeSet<TObject, TKey> changes)
@@ -32,9 +41,9 @@ namespace DynamicData.Internal
                 {
                     case ChangeReason.Update:
                     case ChangeReason.Add:
-                    {
-                        _data[item.Key] = item.Current;
-                    }
+                        {
+                            _data[item.Key] = item.Current;
+                        }
                         break;
                     case ChangeReason.Remove:
                         _data.Remove(item.Key);

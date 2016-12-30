@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using DynamicData.Internal;
+using DynamicData.List.Internal;
 
-namespace DynamicData.Linq
+namespace DynamicData.List.Linq
 {
     internal class UnifiedChangeEnumerator<T> : IEnumerable<UnifiedChange<T>>
     {

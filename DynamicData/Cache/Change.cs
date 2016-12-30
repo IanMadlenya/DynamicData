@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using DynamicData.Kernel;
 
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     /// <summary>
@@ -9,7 +10,6 @@ namespace DynamicData
     /// </summary>
     public struct Change<TObject, TKey>
     {
-
         /// <summary>
         /// The unique key of the item which has changed
         /// </summary>
@@ -176,6 +176,5 @@ namespace DynamicData
         {
             return $"{Reason}, Key: {Key}, Current: {Current}, Previous: {Previous}";
         }
-
     }
 }

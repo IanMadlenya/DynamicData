@@ -1,4 +1,5 @@
-﻿namespace DynamicData
+﻿// ReSharper disable once CheckNamespace
+namespace DynamicData
 {
     /// <summary>
     /// A collection of distinct value updates.

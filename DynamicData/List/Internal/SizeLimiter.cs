@@ -6,7 +6,7 @@ using System.Reactive.Linq;
 using System.Threading;
 using DynamicData.Annotations;
 
-namespace DynamicData.Internal
+namespace DynamicData.List.Internal
 {
     internal sealed class LimitSizeTo<T>
     {
@@ -33,7 +33,7 @@ namespace DynamicData.Internal
             return _sourceList.Connect()
                               .ObserveOn(_scheduler)
                               .Synchronize(_locker)
-                              .Transform(t => new ExpirableItem<T>(t, DateTime.Now, Interlocked.Increment(ref orderItemWasAdded)))
+                              .Transform(t => new ExpirableItem<T>(t, _scheduler.Now.DateTime, Interlocked.Increment(ref orderItemWasAdded)))
                               .ToCollection()
                               .Select(list =>
                               {

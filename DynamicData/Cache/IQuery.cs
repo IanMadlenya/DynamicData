@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using DynamicData.Kernel;
-
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     /// <summary>
@@ -36,7 +36,6 @@ namespace DynamicData
         /// The key values.
         /// </value>
         IEnumerable<KeyValuePair<TKey, TObject>> KeyValues { get; }
-
 
         /// <summary>
         /// Gets the count.

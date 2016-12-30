@@ -1,4 +1,6 @@
-﻿namespace DynamicData
+﻿
+// ReSharper disable once CheckNamespace
+namespace DynamicData
 {
     /// <summary>
     ///  The reason for an individual change.  

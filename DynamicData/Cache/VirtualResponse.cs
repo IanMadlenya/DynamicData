@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     /// <summary>
@@ -41,7 +42,7 @@ namespace DynamicData
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(IVirtualResponse other)
         {
-            return TotalSizeStartIndexSizeComparerInstance.Equals(this, other);
+            return s_totalSizeStartIndexSizeComparerInstance.Equals(this, other);
         }
 
         /// <summary>
@@ -100,9 +101,9 @@ namespace DynamicData
             }
         }
 
-        private static readonly IEqualityComparer<IVirtualResponse> TotalSizeStartIndexSizeComparerInstance = new TotalSizeStartIndexSizeEqualityComparer();
+        private static readonly IEqualityComparer<IVirtualResponse> s_totalSizeStartIndexSizeComparerInstance = new TotalSizeStartIndexSizeEqualityComparer();
 
-        public static IEqualityComparer<IVirtualResponse> DefaultComparer { get { return TotalSizeStartIndexSizeComparerInstance; } }
+        public static IEqualityComparer<IVirtualResponse> DefaultComparer { get { return s_totalSizeStartIndexSizeComparerInstance; } }
 
         #endregion
 

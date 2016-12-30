@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.Cache.Internal
 {
     internal class FilteredUpdater<TObject, TKey> : AbstractFilter<TObject, TKey>
     {
-        public FilteredUpdater(ICache<TObject, TKey> cache, Func<TObject, bool> filter)
+        public FilteredUpdater(ChangeAwareCache<TObject, TKey> cache, Func<TObject, bool> filter)
             : base(cache, filter)
         {
         }

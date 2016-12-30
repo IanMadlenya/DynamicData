@@ -1,3 +1,4 @@
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     internal interface ICache<TObject, TKey> : IQuery<TObject, TKey>

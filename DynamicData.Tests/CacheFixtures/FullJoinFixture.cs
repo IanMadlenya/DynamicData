@@ -7,6 +7,25 @@ namespace DynamicData.Tests.CacheFixtures
 {
     public class FullJoinFixture
     {
+        private class Person
+        {
+            public int Id { get; }
+        }
+
+        private class Address
+        {
+            public int Id { get; }
+            public int PersonId { get; }
+        }
+
+        private class PersonWithAddress
+        {
+            public PersonWithAddress(Person person, Address address)
+            {
+            }
+        }
+
+
         private SourceCache<Device, string> _left;
         private SourceCache<DeviceMetaData, string> _right;
         private ChangeSetAggregator<DeviceWithMetadata, string> _result;
@@ -119,7 +138,6 @@ namespace DynamicData.Tests.CacheFixtures
         [Test]
         public void AddRightThenLeft()
         {
-
             _right.Edit(innerCache =>
             {
                 innerCache.AddOrUpdate(new DeviceMetaData("Device1"));
@@ -143,7 +161,6 @@ namespace DynamicData.Tests.CacheFixtures
         [Test]
         public void UpdateRight()
         {
-
             _right.Edit(innerCache =>
             {
                 innerCache.AddOrUpdate(new DeviceMetaData("Device1"));
@@ -280,7 +297,7 @@ namespace DynamicData.Tests.CacheFixtures
 
         public class DeviceWithMetadata : IEquatable<DeviceWithMetadata>
         {
-            public string Key { get;  }
+            public string Key { get; }
             public Optional<Device> Device { get; set; }
             public Optional<DeviceMetaData> MetaData { get; }
 
@@ -305,7 +322,7 @@ namespace DynamicData.Tests.CacheFixtures
                 if (ReferenceEquals(null, obj)) return false;
                 if (ReferenceEquals(this, obj)) return true;
                 if (obj.GetType() != this.GetType()) return false;
-                return Equals((DeviceWithMetadata) obj);
+                return Equals((DeviceWithMetadata)obj);
             }
 
             public override int GetHashCode()

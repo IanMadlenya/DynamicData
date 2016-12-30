@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Reactive.Linq;
-using DynamicData.Aggregation;
 using DynamicData.Annotations;
 using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.List.Internal
 {
     internal class QueryWhenChanged<T>
     {
@@ -20,11 +19,11 @@ namespace DynamicData.Internal
         public IObservable<IReadOnlyCollection<T>> Run()
         {
             return _source.Scan(new List<T>(), (list, changes) =>
-            {
-                list.Clone(changes);
-                return list;
-            }
-                ).Select(list => new ReadOnlyCollectionLight<T>(list, list.Count));
+                {
+                    list.Clone(changes);
+                    return list;
+                }
+            ).Select(list => new ReadOnlyCollectionLight<T>(list, list.Count));
         }
     }
 }

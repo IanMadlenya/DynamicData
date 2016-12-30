@@ -3,16 +3,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using DynamicData.Annotations;
+using DynamicData.Internal;
 using DynamicData.Kernel;
 using DynamicData.Operators;
 
-namespace DynamicData.Internal
+namespace DynamicData.List.Internal
 {
     internal class Pager<T>
     {
         private readonly IObservable<IChangeSet<T>> _source;
         private readonly IObservable<IPageRequest> _requests;
-        
+
         public Pager([NotNull] IObservable<IChangeSet<T>> source, [NotNull] IObservable<IPageRequest> requests)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
@@ -63,7 +64,7 @@ namespace DynamicData.Internal
 
             var previous = paged;
 
-            int pages = CalculatePages(all,request);
+            int pages = CalculatePages(all, request);
             int page = request.Page > pages ? pages : request.Page;
             int skip = request.Size * (page - 1);
 

@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using DynamicData.Binding;
 using DynamicData.Tests.Domain;
 using Microsoft.Reactive.Testing;
 using NUnit.Framework;
@@ -8,7 +7,7 @@ using NUnit.Framework;
 namespace DynamicData.Tests.ListFixtures
 {
     [TestFixture]
-    class SizeLimitFixture
+    internal class SizeLimitFixture
     {
         private ISourceList<Person> _source;
         private ChangeSetAggregator<Person> _results;
@@ -86,11 +85,11 @@ namespace DynamicData.Tests.ListFixtures
         }
 
         [Test]
-        [ExpectedException]
+
         public void ForceError()
         {
             var person = _generator.Take(1).First();
-            _source.RemoveAt(1);
+            Assert.Throws<ArgumentOutOfRangeException>(() => _source.RemoveAt(1));
         }
 
         [Test]
@@ -102,26 +101,10 @@ namespace DynamicData.Tests.ListFixtures
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
         public void ThrowsIfSizeLimitIsZero()
         {
             // Initialise();
-
-            new SourceCache<Person, string>(p => p.Key).LimitSizeTo(0);
+            Assert.Throws<ArgumentException>(() => new SourceCache<Person, string>(p => p.Key).LimitSizeTo(0));
         }
-
-        //[Test]
-        //public void OnCompleteIsInvokedWhenSourceisDisposed()
-        //{
-        //    bool completed = false;
-
-        //    var subscriber = _source.LimitSizeTo(10)
-        //        .FinallySafe(() => completed = true)
-        //        .Subscribe();
-
-        //    _source.Dispose();
-        //    _scheduler.Start();
-        //    Assert.IsTrue(completed, "Completed has not been called");
-        //}
     }
 }

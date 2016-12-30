@@ -4,9 +4,11 @@ using System.Linq;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DynamicData.Annotations;
+using DynamicData.Cache.Internal;
+using DynamicData.Internal;
 using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.List.Internal
 {
     internal sealed class DynamicCombiner<T>
     {
@@ -128,23 +130,23 @@ namespace DynamicData.Internal
             switch (_type)
             {
                 case CombineOperator.And:
-                {
-                    return sourceLists.All(s => s.Tracker.Contains(item));
-                }
+                    {
+                        return sourceLists.All(s => s.Tracker.Contains(item));
+                    }
                 case CombineOperator.Or:
-                {
-                    return sourceLists.Any(s => s.Tracker.Contains(item));
-                }
+                    {
+                        return sourceLists.Any(s => s.Tracker.Contains(item));
+                    }
                 case CombineOperator.Xor:
-                {
-                    return sourceLists.Count(s => s.Tracker.Contains(item)) == 1;
-                }
+                    {
+                        return sourceLists.Count(s => s.Tracker.Contains(item)) == 1;
+                    }
                 case CombineOperator.Except:
-                {
-                    var first = sourceLists[0].Tracker.Contains(item);
-                    var others = sourceLists.Skip(1).Any(s => s.Tracker.Contains(item));
-                    return first && !others;
-                }
+                    {
+                        var first = sourceLists[0].Tracker.Contains(item);
+                        var others = sourceLists.Skip(1).Any(s => s.Tracker.Contains(item));
+                        return first && !others;
+                    }
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -162,7 +164,7 @@ namespace DynamicData.Internal
 
             private void Clone(IChangeSet<T> changes)
             {
-                foreach(var change in changes)
+                foreach (var change in changes)
                 {
                     switch (change.Reason)
                     {

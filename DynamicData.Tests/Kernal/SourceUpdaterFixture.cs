@@ -1,6 +1,5 @@
 using System.Linq;
 using DynamicData.Cache.Internal;
-using DynamicData.Internal;
 using DynamicData.Tests.Domain;
 using NUnit.Framework;
 
@@ -9,15 +8,14 @@ namespace DynamicData.Tests.Kernal
     [TestFixture]
     internal class SourceUpdaterFixture
     {
-
-        private Cache<Person, string> _cache;
-        private SourceUpdater<Person, string> _updater;
+        private ChangeAwareCache<Person, string> _cache;
+        private CacheUpdater<Person, string> _updater;
 
         [SetUp]
         public void Initialise()
         {
-            _cache = new Cache<Person, string>();
-            _updater = new SourceUpdater<Person, string>(_cache, new KeySelector<Person, string>(p => p.Name));
+            _cache = new ChangeAwareCache<Person, string>();
+            _updater = new CacheUpdater<Person, string>(_cache, new KeySelector<Person, string>(p => p.Name));
         }
 
 
@@ -141,8 +139,7 @@ namespace DynamicData.Tests.Kernal
         [Test]
         public void NullSelectorWillThrow()
         {
-
-           // Assert.Throws<ArgumentNullException>(() => new SourceUpdater<Person, string>(_cache, new KeySelector<Person, string>(null)));
+            // Assert.Throws<ArgumentNullException>(() => new SourceUpdater<Person, string>(_cache, new KeySelector<Person, string>(null)));
         }
     }
 }

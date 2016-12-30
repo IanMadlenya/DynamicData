@@ -28,8 +28,7 @@ namespace DynamicData.Cache.Internal
             _rightKeySelector = rightKeySelector;
             _resultSelector = resultSelector;
         }
-
-
+        
         public IObservable<IChangeSet<TDestination, TLeftKey>> Run()
         {
             return Observable.Create<IChangeSet<TDestination, TLeftKey>>(observer =>
@@ -37,11 +36,11 @@ namespace DynamicData.Cache.Internal
                 var locker = new object();
 
                 //create local backing stores
-                var leftCache = _left.Synchronize(locker).AsObservableCache();
-                var rightCache = _right.Synchronize(locker).ChangeKey(_rightKeySelector).AsObservableCache();
+                var leftCache = _left.Synchronize(locker).AsObservableCache(false);
+                var rightCache = _right.Synchronize(locker).ChangeKey(_rightKeySelector).AsObservableCache(false);
 
                 //joined is the final cache
-                var joinedCache = new IntermediateCache<TDestination, TLeftKey>();
+                var joinedCache = new LockFreeObservableCache<TDestination, TLeftKey>();
 
                 var leftLoader = leftCache.Connect()
                     .Subscribe(changes =>
@@ -86,35 +85,35 @@ namespace DynamicData.Cache.Internal
                                 {
                                     case ChangeReason.Add:
                                     case ChangeReason.Update:
-                                    {
-                                        if (left.HasValue)
                                         {
-                                            //Update with left and right value
-                                            innerCache.AddOrUpdate(_resultSelector(change.Key, left.Value, right),
-                                                change.Key);
+                                            if (left.HasValue)
+                                            {
+                                                //Update with left and right value
+                                                innerCache.AddOrUpdate(_resultSelector(change.Key, left.Value, right),
+                                                    change.Key);
+                                            }
+                                            else
+                                            {
+                                                //remove if it is already in the cache
+                                                innerCache.Remove(change.Key);
+                                            }
                                         }
-                                        else
-                                        {
-                                            //remove if it is already in the cache
-                                            innerCache.Remove(change.Key);
-                                        }
-                                    }
                                         break;
                                     case ChangeReason.Remove:
-                                    {
-                                        if (left.HasValue)
                                         {
-                                            //Update with no right value
-                                            innerCache.AddOrUpdate(
-                                                _resultSelector(change.Key, left.Value, Optional<TRight>.None),
-                                                change.Key);
+                                            if (left.HasValue)
+                                            {
+                                                //Update with no right value
+                                                innerCache.AddOrUpdate(
+                                                    _resultSelector(change.Key, left.Value, Optional<TRight>.None),
+                                                    change.Key);
+                                            }
+                                            else
+                                            {
+                                                //remove if it is already in the cache
+                                                innerCache.Remove(change.Key);
+                                            }
                                         }
-                                        else
-                                        {
-                                            //remove if it is already in the cache
-                                            innerCache.Remove(change.Key);
-                                        }
-                                    }
                                         break;
                                     case ChangeReason.Evaluate:
                                         //propagate upstream
@@ -127,7 +126,7 @@ namespace DynamicData.Cache.Internal
 
 
                 return new CompositeDisposable(
-                    joinedCache.Connect().SubscribeSafe(observer),
+                    joinedCache.Connect().NotEmpty().SubscribeSafe(observer),
                     leftCache,
                     rightCache,
                     leftLoader,

@@ -2,11 +2,14 @@
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 
-namespace DynamicData.Internal
+namespace DynamicData.List.Internal
 {
-    class RefCount<T>
+    internal class RefCount<T>
     {
         private readonly IObservable<IChangeSet<T>> _source;
+        private readonly object _locker = new object();
+        private int _refCount = 0;
+        private IObservableList<T> _list = null;
 
         public RefCount(IObservable<IChangeSet<T>> source)
         {
@@ -15,34 +18,27 @@ namespace DynamicData.Internal
 
         public IObservable<IChangeSet<T>> Run()
         {
-            int refCount = 0;
-            var locker = new object();
-            IObservableList<T> list = null;
-
             return Observable.Create<IChangeSet<T>>(observer =>
             {
-                lock (locker)
+                lock (_locker)
+                    if (++_refCount == 1)
+                        _list = _source.AsObservableList();
+
+                var subscriber = _list.Connect().SubscribeSafe(observer);
+
+                return Disposable.Create(() =>
                 {
-                    refCount++;
-                    if (refCount == 1)
-
-                        list = _source.AsObservableList();
-
-                    // ReSharper disable once PossibleNullReferenceException (never the case!)
-                    var subscriber = list.Connect().SubscribeSafe(observer);
-
-                    return Disposable.Create(() =>
-                    {
-                        lock (locker)
+                    subscriber.Dispose();
+                    IDisposable listToDispose = null;
+                    lock (_locker)
+                        if (--_refCount == 0)
                         {
-                            refCount--;
-                            subscriber.Dispose();
-                            if (refCount != 0) return;
-                            list.Dispose();
-                            list = null;
+                            listToDispose = _list;
+                            _list = null;
                         }
-                    });
-                }
+                    if (listToDispose != null)
+                        listToDispose.Dispose();
+                });
             });
         }
     }

@@ -1,4 +1,5 @@
-﻿namespace DynamicData
+﻿// ReSharper disable once CheckNamespace
+namespace DynamicData
 {
     /// <summary>
     /// A simple adaptor to inject side effects into a sorted changeset observable

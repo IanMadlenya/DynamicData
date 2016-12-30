@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.List.Internal
 {
     internal sealed class AnonymousObservableList<T> : IObservableList<T>
     {

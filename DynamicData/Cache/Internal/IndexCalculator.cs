@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using DynamicData.Operators;
 
-namespace DynamicData.Internal
+
+namespace DynamicData.Cache.Internal
 {
     /// <summary>
     /// Calculates a sequential change set.
@@ -33,7 +32,7 @@ namespace DynamicData.Internal
         /// </summary>
         /// <param name="cache">The cache.</param>
         /// <returns></returns>
-        public IChangeSet<TObject, TKey> Load(ICache<TObject, TKey> cache)
+        public IChangeSet<TObject, TKey> Load(ChangeAwareCache<TObject, TKey> cache)
         {
             //for the first batch of changes may have arrived before the comparer was set.
             //therefore infer the first batch of changes from the cache
@@ -47,7 +46,7 @@ namespace DynamicData.Internal
         /// </summary>
         /// <param name="cache">The cache.</param>
         /// <returns></returns>
-        public void Reset(ICache<TObject, TKey> cache)
+        public void Reset(ChangeAwareCache<TObject, TKey> cache)
         {
             _list = cache.KeyValues.OrderBy(kv => kv, _comparer).ToList();
         }
@@ -112,41 +111,41 @@ namespace DynamicData.Internal
                 switch (u.Reason)
                 {
                     case ChangeReason.Add:
-                    {
-                        var position = GetInsertPositionBinary(current);
-                        _list.Insert(position, current);
+                        {
+                            var position = GetInsertPositionBinary(current);
+                            _list.Insert(position, current);
 
-                        result.Add(new Change<TObject, TKey>(ChangeReason.Add, u.Key, u.Current, position));
-                    }
+                            result.Add(new Change<TObject, TKey>(ChangeReason.Add, u.Key, u.Current, position));
+                        }
                         break;
 
                     case ChangeReason.Update:
-                    {
-                        var previous = new KeyValuePair<TKey, TObject>(u.Key, u.Previous.Value);
-                        var old = GetCurrentPosition(previous);
-                        _list.RemoveAt(old);
+                        {
+                            var previous = new KeyValuePair<TKey, TObject>(u.Key, u.Previous.Value);
+                            var old = GetCurrentPosition(previous);
+                            _list.RemoveAt(old);
 
-                        var newposition = GetInsertPositionBinary(current);
-                        _list.Insert(newposition, current);
+                            var newposition = GetInsertPositionBinary(current);
+                            _list.Insert(newposition, current);
 
-                        result.Add(new Change<TObject, TKey>(ChangeReason.Update,
-                                                             u.Key,
-                                                             u.Current, u.Previous, newposition, old));
-                    }
+                            result.Add(new Change<TObject, TKey>(ChangeReason.Update,
+                                                                 u.Key,
+                                                                 u.Current, u.Previous, newposition, old));
+                        }
                         break;
 
                     case ChangeReason.Remove:
-                    {
-                        var position = GetCurrentPosition(current);
-                        _list.RemoveAt(position);
-                        result.Add(new Change<TObject, TKey>(ChangeReason.Remove, u.Key, u.Current, position));
-                    }
+                        {
+                            var position = GetCurrentPosition(current);
+                            _list.RemoveAt(position);
+                            result.Add(new Change<TObject, TKey>(ChangeReason.Remove, u.Key, u.Current, position));
+                        }
                         break;
 
                     case ChangeReason.Evaluate:
-                    {
-                        result.Add(u);
-                    }
+                        {
+                            result.Add(u);
+                        }
                         break;
                     default:
                         break;

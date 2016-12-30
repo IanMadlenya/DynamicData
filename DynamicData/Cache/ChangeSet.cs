@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using DynamicData.Annotations;
 using DynamicData.Kernel;
 
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     /// <summary>
@@ -111,7 +112,11 @@ namespace DynamicData
         /// <value>
         /// The capacity.
         /// </value>
-        public int Capacity { get { return Items.Capacity; } set { Items.Capacity = value; } }
+        public int Capacity
+        {
+            get { return Items.Capacity; }
+            set { Items.Capacity = value; }
+        }
 
         /// <summary>
         ///     The total update count
@@ -169,7 +174,7 @@ namespace DynamicData
         /// </returns>
         public override string ToString()
         {
-            return $"ChangeSet<{typeof (TObject).Name}.{typeof (TKey).Name}>. Count={Count}";
+            return $"ChangeSet<{typeof(TObject).Name}.{typeof(TKey).Name}>. Count={Count}";
         }
     }
 }

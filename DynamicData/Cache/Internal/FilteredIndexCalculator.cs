@@ -2,7 +2,7 @@
 using System.Linq;
 using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.Cache.Internal
 {
     internal class FilteredIndexCalculator<TObject, TKey>
     {
@@ -83,10 +83,11 @@ namespace DynamicData.Internal
                     int insertIndex = ~desiredIndex;
 
                     //this should never be the case, but check anyway
-                    if (previousindex == insertIndex)
-                    {
-                        continue;
-                    }
+                    if (previousindex == insertIndex) continue;
+
+
+                    if (insertIndex < 0)
+                        throw new SortException("Cannot determine current index");
 
                     previousList.RemoveAt(previousindex);
                     previousList.Insert(insertIndex, current);

@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using DynamicData.Tests.Domain;
 using NUnit.Framework;
 
 namespace DynamicData.Tests.ListFixtures
 {
-
     [TestFixture]
     public class EditDiffFixture
     {
@@ -41,6 +36,18 @@ namespace DynamicData.Tests.ListFixtures
             CollectionAssert.AreEquivalent(newPeople, _cache.Items);
             var lastChange = _result.Messages.Last();
             Assert.AreEqual(5, lastChange.Adds);
+        }
+
+        [Test]
+        public void EditWithSameData()
+        {
+            var newPeople = Enumerable.Range(1, 10).Select(i => new Person("Name" + i, i)).ToArray();
+
+            _cache.EditDiff(newPeople, Person.NameAgeGenderComparer);
+
+            Assert.AreEqual(10, _cache.Count);
+            CollectionAssert.AreEquivalent(newPeople, _cache.Items);
+            Assert.AreEqual(1, _result.Messages.Count);
         }
 
         [Test]
@@ -77,8 +84,7 @@ namespace DynamicData.Tests.ListFixtures
         [Test]
         public void VariousChanges()
         {
-
-            var newList = Enumerable.Range(6, 10).Select(i => new Person("Name" + i, i )).ToArray();
+            var newList = Enumerable.Range(6, 10).Select(i => new Person("Name" + i, i)).ToArray();
 
             _cache.EditDiff(newList, Person.NameAgeGenderComparer);
 

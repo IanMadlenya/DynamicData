@@ -42,9 +42,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="Microsoft.Reactive.Testing">
-      <HintPath>..\packages\Rx-Testing.2.2.5\lib\net45\Microsoft.Reactive.Testing.dll</HintPath>
-    </Reference>
     <Reference Include="nunit.framework, Version=2.6.3.13283, Culture=neutral, PublicKeyToken=96d09a1eb7f44a77, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
@@ -65,6 +62,9 @@
     <Reference Include="System.Reactive.PlatformServices">
       <HintPath>..\packages\Rx-PlatformServices.2.2.5\lib\net45\System.Reactive.PlatformServices.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Reactive.Testing">
+      <HintPath>..\packages\Rx-Testing.2.2.5\lib\net45\Microsoft.Reactive.Testing.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <CodeAnalysisDependentAssemblyPaths Condition=" '$(VS100COMNTOOLS)' != '' " Include="$(VS100COMNTOOLS)..\IDE\PrivateAssemblies">
@@ -79,6 +79,8 @@
     <Compile Include="Binding\BindChangeSetFixture.cs" />
     <Compile Include="Binding\BindFromObservableListFixture.cs" />
     <Compile Include="Binding\BindSortedChangeSetFixture.cs" />
+    <Compile Include="Binding\ExpressionBuilderFixture.cs" />
+    <Compile Include="Binding\NotifyPropertyChangedExFixture.cs" />
     <Compile Include="Binding\ObservableCollectionTestFixture.cs" />
     <Compile Include="Binding\ObservableCollectionToListFixture.cs" />
     <Compile Include="CacheFixtures\DynamicAndFixture.cs" />
@@ -88,19 +90,31 @@
     <Compile Include="CacheFixtures\EditDiffFixture.cs" />
     <Compile Include="CacheFixtures\FilterOnPropertyFixture.cs" />
     <Compile Include="CacheFixtures\ForEachChangeFixture.cs" />
+    <Compile Include="CacheFixtures\FromAsyncFixture.cs" />
+    <Compile Include="CacheFixtures\FullJoinManyFixture.cs" />
+    <Compile Include="CacheFixtures\GroupImmutableFixture.cs" />
+    <Compile Include="CacheFixtures\GroupOnPropertyFixture.cs" />
+    <Compile Include="CacheFixtures\GroupOnPropertyWithImmutableStateFixture.cs" />
     <Compile Include="CacheFixtures\InnerJoinFixture.cs" />
     <Compile Include="CacheFixtures\FullJoinFixture.cs" />
+    <Compile Include="CacheFixtures\InnerJoinManyFixture.cs" />
     <Compile Include="CacheFixtures\LeftJoinFixture.cs" />
     <Compile Include="CacheFixtures\KeyValueCollectionEx.cs" />
+    <Compile Include="CacheFixtures\LeftJoinManyFixture.cs" />
     <Compile Include="CacheFixtures\PageAndSortFixture.cs" />
     <Compile Include="CacheFixtures\PageWithSortControllerFixture.cs" />
     <Compile Include="AggregationTests\SumFixture.cs" />
     <Compile Include="CacheFixtures\RightJoinFixture.cs" />
+    <Compile Include="CacheFixtures\RightJoinManyFixture.cs" />
+    <Compile Include="CacheFixtures\SortObservableFixtureFixture.cs" />
+    <Compile Include="CacheFixtures\SwitchFixture.cs" />
+    <Compile Include="CacheFixtures\ToObservableChangeSetFixture.cs" />
     <Compile Include="CacheFixtures\TransformManySimpleFixture.cs" />
     <Compile Include="CacheFixtures\TransformTreeFixture.cs" />
     <Compile Include="CacheFixtures\XorFixture.cs" />
+    <Compile Include="Domain\ParentAndChildren.cs" />
+    <Compile Include="Domain\ParentChild.cs" />
     <Compile Include="Domain\PersonEmployment.cs" />
-    <Compile Include="Domain\PersonSorter.cs" />
     <Compile Include="Domain\PersonWithChildren.cs" />
     <Compile Include="Domain\PersonWithEmployment.cs" />
     <Compile Include="Domain\PersonWithRelations.cs" />
@@ -158,12 +172,12 @@
     <Compile Include="CacheFixtures\DistinctFixture.cs" />
     <Compile Include="CacheFixtures\GroupFixture.cs" />
     <Compile Include="Domain\Person.cs" />
-    <Compile Include="Domain\PersonNoKey.cs" />
     <Compile Include="Domain\PersonWithGender.cs" />
     <Compile Include="CacheFixtures\MonitorStatusFixture.cs" />
     <Compile Include="CacheFixtures\TransformFixture.cs" />
     <Compile Include="ListFixtures\AndFixture.cs" />
     <Compile Include="ListFixtures\BatchFixture.cs" />
+    <Compile Include="ListFixtures\CastFixture.cs" />
     <Compile Include="ListFixtures\CloneFixture.cs" />
     <Compile Include="ListFixtures\BufferFixture.cs" />
     <Compile Include="ListFixtures\BatchIfFixture.cs" />
@@ -185,8 +199,11 @@
     <Compile Include="ListFixtures\FilterFixture.cs" />
     <Compile Include="ListFixtures\FilterOnPropertyFixture.cs" />
     <Compile Include="ListFixtures\ForEachChangeFixture.cs" />
-    <Compile Include="ListFixtures\GroupMisssingkey.cs" />
+    <Compile Include="ListFixtures\FromAsyncFixture.cs" />
+    <Compile Include="ListFixtures\GroupImmutableFixture.cs" />
     <Compile Include="ListFixtures\GroupOnFixture.cs" />
+    <Compile Include="ListFixtures\GroupOnPropertyFixture.cs" />
+    <Compile Include="ListFixtures\GroupOnPropertyWithImmutableStateFixture.cs" />
     <Compile Include="ListFixtures\MergeManyChangeSetsFixture.cs" />
     <Compile Include="ListFixtures\MergeManyFixture.cs" />
     <Compile Include="ListFixtures\OrFixture.cs" />
@@ -197,17 +214,18 @@
     <Compile Include="ListFixtures\RefCountFixture.cs" />
     <Compile Include="ListFixtures\RemoveManyFixture.cs" />
     <Compile Include="ListFixtures\ReverseFixture.cs" />
+    <Compile Include="ListFixtures\SelectFixture.cs" />
     <Compile Include="ListFixtures\SizeLimitFixture.cs" />
     <Compile Include="ListFixtures\SortFixture.cs" />
     <Compile Include="ListFixtures\SortMutableFixture.cs" />
     <Compile Include="ListFixtures\SubscribeManyFixture.cs" />
+    <Compile Include="ListFixtures\SwitchFixture.cs" />
+    <Compile Include="ListFixtures\ToObservableChangeSetFixture.cs" />
     <Compile Include="ListFixtures\TransformFixture.cs" />
     <Compile Include="ListFixtures\TransformManyFixture.cs" />
     <Compile Include="ListFixtures\VirtualisationFixture.cs" />
     <Compile Include="ListFixtures\XOrFixture.cs" />
-    <Compile Include="ListFixtures\_TestSubmittedExternally.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Utilities\NotifyPropertyChangedExFixture.cs" />
     <Compile Include="Utilities\SelectManyExtensions.cs" />
     <Compile Include="CacheFixtures\SourceCacheFixture.cs" />
     <Compile Include="Utilities\Timer.cs" />

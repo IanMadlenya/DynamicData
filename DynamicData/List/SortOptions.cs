@@ -1,4 +1,6 @@
-﻿namespace DynamicData
+﻿
+// ReSharper disable once CheckNamespace
+namespace DynamicData
 {
     /// <summary>
     /// Options for sorting

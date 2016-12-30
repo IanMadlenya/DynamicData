@@ -2,7 +2,7 @@ using System;
 using System.Reactive.Linq;
 using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.List.Internal
 {
     internal sealed class OnBeingAdded<T>
     {
@@ -24,7 +24,7 @@ namespace DynamicData.Internal
 
         private void RegisterForAddition(IChangeSet<T> changes)
         {
-            foreach(var change in changes)
+            foreach (var change in changes)
             {
                 switch (change.Reason)
                 {

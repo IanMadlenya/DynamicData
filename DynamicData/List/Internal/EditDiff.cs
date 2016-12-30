@@ -28,7 +28,7 @@ namespace DynamicData.List.Internal
                 var removes = originalItems.Except(newItems, _equalityComparer);
                 var adds = newItems.Except(originalItems, _equalityComparer);
 
-                innerList.RemoveMany(removes);
+                innerList.Remove(removes);
                 innerList.AddRange(adds);
             });
         }

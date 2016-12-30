@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DynamicData.Kernel;
-
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     /// <summary>
@@ -47,11 +47,11 @@ namespace DynamicData
         /// <summary>
         /// Returns a filtered stream of cache changes preceeded with the initital filtered state
         /// </summary>
-        /// <param name="filter">The filter.</param>
+        /// <param name="predicate">The predicate.</param>
         /// <returns></returns>
-        public IObservable<IChangeSet<TObject, TKey>> Connect(Func<TObject, bool> filter)
+        public IObservable<IChangeSet<TObject, TKey>> Connect(Func<TObject, bool> predicate)
         {
-            return _innnerCache.Connect(filter);
+            return _innnerCache.Connect(predicate);
         }
 
         /// <summary>
@@ -101,10 +101,7 @@ namespace DynamicData
         /// </remarks>
         /// <param name="key">The key.</param>
         /// <returns></returns>
-        public Optional<TObject> Lookup(TKey key)
-        {
-            return _innnerCache.Lookup(key);
-        }
+        public Optional<TObject> Lookup(TKey key) => _innnerCache.Lookup(key);
 
         /// <summary>
         /// Releases unmanaged and - optionally - managed resources.

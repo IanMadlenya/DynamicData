@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reactive.Linq;
 using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.Cache.Internal
 {
     internal sealed class DistinctCalculator<TObject, TKey, TValue>
     {
@@ -51,37 +51,37 @@ namespace DynamicData.Internal
                 result.Add(new Change<TValue, TValue>(ChangeReason.Remove, value, value));
             };
 
-            foreach(var change in changes)
+            foreach (var change in changes)
             {
                 var key = change.Key;
                 switch (change.Reason)
                 {
                     case ChangeReason.Add:
-                    {
-                        var value = _valueSelector(change.Current);
-                        addAction(value);
-                        _itemCache[key] = value;
-                        break;
-                    }
+                        {
+                            var value = _valueSelector(change.Current);
+                            addAction(value);
+                            _itemCache[key] = value;
+                            break;
+                        }
                     case ChangeReason.Evaluate:
                     case ChangeReason.Update:
-                    {
-                        var value = _valueSelector(change.Current);
-                        var previous = _itemCache[key];
-                        if (value.Equals(previous)) continue;
+                        {
+                            var value = _valueSelector(change.Current);
+                            var previous = _itemCache[key];
+                            if (value.Equals(previous)) continue;
 
-                        removeAction(previous);
-                        addAction(value);
-                        _itemCache[key] = value;
-                        break;
-                    }
+                            removeAction(previous);
+                            addAction(value);
+                            _itemCache[key] = value;
+                            break;
+                        }
                     case ChangeReason.Remove:
-                    {
-                        var previous = _itemCache[key];
-                        removeAction(previous);
-                        _itemCache.Remove(key);
-                        break;
-                    }
+                        {
+                            var previous = _itemCache[key];
+                            removeAction(previous);
+                            _itemCache.Remove(key);
+                            break;
+                        }
                 }
             }
             return new DistinctChangeSet<TValue>(result);

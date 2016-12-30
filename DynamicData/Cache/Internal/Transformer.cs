@@ -3,13 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.Cache.Internal
 {
     internal class Transformer<TDestination, TSource, TKey> : AbstractTransformer<TDestination, TSource, TKey>
     {
         public Transformer(Action<Error<TSource, TKey>> exceptionCallback)
             : base(exceptionCallback)
         {
+
         }
 
         protected override IChangeSet<TDestination, TKey> DoTransform(IChangeSet<TSource, TKey> updates, Func<Change<TSource, TKey>, Optional<TransformResult>> factory)

@@ -1,8 +1,9 @@
 using System;
 using System.Reactive.Linq;
 using DynamicData.Annotations;
+using DynamicData.Internal;
 
-namespace DynamicData.Internal
+namespace DynamicData.List.Internal
 {
     internal class ImmutableFilter<T>
     {
@@ -20,15 +21,13 @@ namespace DynamicData.Internal
 
         public IObservable<IChangeSet<T>> Run()
         {
-            return Observable.Create<IChangeSet<T>>(observer =>
-            {
-                var filtered = new ChangeAwareList<T>();
-                 return _source.Select(changes =>
-                {
-                    filtered.Filter(changes, _predicate);
-                    return filtered.CaptureChanges();
-                }).NotEmpty().SubscribeSafe(observer);
-            });
+            return _source.Scan(new ChangeAwareList<T>(), (filtered, changes) =>
+             {
+                 filtered.Filter(changes, _predicate);
+                 return filtered;
+             })
+            .Select(list => list.CaptureChanges())
+            .NotEmpty();
         }
     }
 }

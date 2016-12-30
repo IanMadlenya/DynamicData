@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using DynamicData.Annotations;
 using DynamicData.Kernel;
+using DynamicData.List.Internal;
 
 namespace DynamicData.Internal
 {
@@ -26,9 +27,8 @@ namespace DynamicData.Internal
             return Observable.Create<IChangeSet<TDestination>>(observer =>
             {
                 var transformed = new ChangeAwareList<TDestination>();
-                return _source.Select(changes=>Process(transformed,changes)).NotEmpty().SubscribeSafe(observer);
+                return _source.Select(changes => Process(transformed, changes)).NotEmpty().SubscribeSafe(observer);
             });
-  
         }
 
         private IChangeSet<TDestination> Process(ChangeAwareList<TDestination> transformed, IChangeSet<TSource> source)

@@ -2,12 +2,13 @@ using System.Collections.Generic;
 using System.Linq;
 using DynamicData.Internal;
 using DynamicData.Kernel;
+using DynamicData.List.Internal;
 using NUnit.Framework;
 
 namespace DynamicData.Tests.ListFixtures
 {
     [TestFixture]
-    class CloneChangesFixture
+    internal class CloneChangesFixture
     {
         private ChangeAwareList<int> _source;
         private List<int> _clone;

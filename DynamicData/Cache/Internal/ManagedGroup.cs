@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DynamicData.Internal
+namespace DynamicData.Cache.Internal
 {
     internal sealed class ManagedGroup<TObject, TKey, TGroupKey> : IDisposable, IGroup<TObject, TKey, TGroupKey>
     {
@@ -12,7 +12,7 @@ namespace DynamicData.Internal
             Key = groupKey;
         }
 
-        internal void Update(Action<IIntermediateUpdater<TObject, TKey>> updateAction)
+        internal void Update(Action<ICacheUpdater<TObject, TKey>> updateAction)
         {
             _cache.Edit(updateAction);
         }

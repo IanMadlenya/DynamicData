@@ -1,3 +1,4 @@
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     /// <summary>
@@ -9,7 +10,7 @@ namespace DynamicData
     public interface IGroup<TObject, TKey, out TGroupKey> : IKey<TGroupKey>
     {
         /// <summary>
-        /// The observable.for the group
+        /// The observable for the group
         /// </summary>
         /// <value>
         /// The observable.

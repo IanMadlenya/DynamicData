@@ -1,23 +1,29 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reactive;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DynamicData.Annotations;
+using DynamicData.Internal;
 using DynamicData.Kernel;
 
-namespace DynamicData.Internal
+namespace DynamicData.List.Internal
 {
     internal sealed class GroupOn<TObject, TGroupKey>
     {
         private readonly IObservable<IChangeSet<TObject>> _source;
         private readonly Func<TObject, TGroupKey> _groupSelector;
-        
-        public GroupOn([NotNull] IObservable<IChangeSet<TObject>> source, [NotNull] Func<TObject, TGroupKey> groupSelector)
+        private readonly IObservable<Unit> _regrouper;
+
+        public GroupOn([NotNull] IObservable<IChangeSet<TObject>> source, [NotNull] Func<TObject, TGroupKey> groupSelector, IObservable<Unit> regrouper)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (groupSelector == null) throw new ArgumentNullException(nameof(groupSelector));
+
             _source = source;
             _groupSelector = groupSelector;
+            _regrouper = regrouper ;
         }
 
         public IObservable<IChangeSet<IGroup<TObject, TGroupKey>>> Run()
@@ -26,14 +32,75 @@ namespace DynamicData.Internal
             {
                 var groupings = new ChangeAwareList<IGroup<TObject, TGroupKey>>();
                 var groupCache = new Dictionary<TGroupKey, Group<TObject, TGroupKey>>();
+
+                var itemsWithGroup = _source
+                    .Transform(t => new ItemWithValue<TObject, TGroupKey>(t, _groupSelector(t)));
                 
-                return _source.Transform(t => new ItemWithValue<TObject, TGroupKey>(t, _groupSelector(t)))
-                              .Select(changes => Process(groupings, groupCache, changes))
+                var locker = new object();
+                var shared = itemsWithGroup.Synchronize(locker).Publish();
+
+                var grouper = shared
+                    .Select(changes => Process(groupings, groupCache, changes));
+
+                IObservable<IChangeSet<IGroup<TObject, TGroupKey>>> regrouper;
+                if (_regrouper == null)
+                {
+                    regrouper = Observable.Never<IChangeSet<IGroup<TObject, TGroupKey>>>();
+                }
+                else
+                {
+                   regrouper = _regrouper.Synchronize(locker)
+                    .CombineLatest(shared.ToCollection(), (_, collection) => Regroup(groupings, groupCache, collection));
+                }
+
+                var publisher = grouper.Merge(regrouper)
                               .DisposeMany() //dispose removes as the grouping is disposable
                               .NotEmpty()
                               .SubscribeSafe(observer);
-            });
 
+                return new CompositeDisposable( publisher, shared.Connect());
+            });
+        }
+
+        private IChangeSet<IGroup<TObject, TGroupKey>> Regroup(ChangeAwareList<IGroup<TObject, TGroupKey>> result,
+            IDictionary<TGroupKey, Group<TObject, TGroupKey>> groupCollection,
+            IReadOnlyCollection<ItemWithValue<TObject, TGroupKey>> currentItems)
+        {
+            //TODO: We need to update ItemWithValue>
+
+            foreach (var itemWithValue in currentItems)
+            {
+                var currentGroupKey = itemWithValue.Value;
+                var newGroupKey = _groupSelector(itemWithValue.Item);
+                if (newGroupKey.Equals(currentGroupKey)) continue;
+                
+
+                //remove from the old group
+                var currentGroupLookup = GetCache(groupCollection, currentGroupKey);
+                var currentGroupCache = currentGroupLookup.Group;
+                currentGroupCache.Edit(innerList=> innerList.Remove(itemWithValue.Item));
+
+                if (currentGroupCache.List.Count == 0)
+                {
+                    groupCollection.Remove(currentGroupKey);
+                    result.Remove(currentGroupCache);
+                }
+
+                //Mark the old item with the new cache group
+                itemWithValue.Value = newGroupKey;
+
+                //add to the new group
+                var newGroupLookup = GetCache(groupCollection, newGroupKey);
+                var newGroupCache = newGroupLookup.Group;
+                newGroupCache.Edit(innerList => innerList.Add(itemWithValue.Item));
+
+                if (newGroupLookup.WasCreated)
+                    result.Add(newGroupCache);
+
+               
+            }
+
+            return result.CaptureChanges();
         }
 
         private IChangeSet<IGroup<TObject, TGroupKey>> Process(ChangeAwareList<IGroup<TObject, TGroupKey>> result, IDictionary<TGroupKey, Group<TObject, TGroupKey>> groupCollection, IChangeSet<ItemWithValue<TObject, TGroupKey>> changes)
@@ -61,26 +128,26 @@ namespace DynamicData.Internal
                             switch (change.Reason)
                             {
                                 case ListChangeReason.Add:
-                                {
-                                    list.Add(change.Current.Item);
-                                    break;
-                                }
-                                case ListChangeReason.Replace:
-                                {
-                                    var previousItem = change.Previous.Value.Item;
-                                    var previousGroup = change.Previous.Value.Value;
-
-                                    //check whether an item changing has resulted in a different group
-                                    if (previousGroup.Equals(currentGroup))
                                     {
-                                        //find and replace
-                                        var index = list.IndexOf(previousItem);
-                                        list[index] = change.Current.Item;
-                                    }
-                                    else
-                                    {
-                                        //add to new group
                                         list.Add(change.Current.Item);
+                                        break;
+                                    }
+                                case ListChangeReason.Replace:
+                                    {
+                                        var previousItem = change.Previous.Value.Item;
+                                        var previousGroup = change.Previous.Value.Value;
+
+                                        //check whether an item changing has resulted in a different group
+                                        if (previousGroup.Equals(currentGroup))
+                                        {
+                                            //find and replace
+                                            var index = list.IndexOf(previousItem);
+                                            list[index] = change.Current.Item;
+                                        }
+                                        else
+                                        {
+                                            //add to new group
+                                            list.Add(change.Current.Item);
 
                                             //remove from old group
                                             groupCollection.Lookup(previousGroup)
@@ -91,20 +158,20 @@ namespace DynamicData.Internal
                                                        groupCollection.Remove(g.GroupKey);
                                                        result.Remove(g);
                                                    });
-                                    }
+                                        }
 
-                                    break;
-                                }
+                                        break;
+                                    }
                                 case ListChangeReason.Remove:
-                                {
-                                    list.Remove(change.Current.Item);
-                                    break;
-                                }
+                                    {
+                                        list.Remove(change.Current.Item);
+                                        break;
+                                    }
                                 case ListChangeReason.Clear:
-                                {
-                                    list.Clear();
-                                    break;
-                                }
+                                    {
+                                        list.Clear();
+                                        break;
+                                    }
                             }
                         }
                     });

@@ -6,20 +6,23 @@ namespace DynamicData.Tests.Domain
 {
     public class Person : AbstractNotifyPropertyChanged, IKey<string>, IEquatable<Person>
     {
+        public string ParentName { get; set; }
         private readonly string _name;
         private int _age;
         private readonly string _gender;
 
-        public Person(string firstname, string lastname, int age, string gender = "F")
-            : this(firstname + " " + lastname, age, gender)
+        public Person(string firstname, string lastname, int age, string gender = "F", string parentName = null)
+            : this(firstname + " " + lastname, age, gender, parentName)
         {
+       
         }
 
-        public Person(string name, int age, string gender = "F")
+        public Person(string name, int age, string gender = "F", string parentName = null)
         {
             _name = name;
             _age = age;
             _gender = gender;
+            ParentName = parentName ?? String.Empty;
         }
 
         public string Name => _name;
@@ -75,9 +78,9 @@ namespace DynamicData.Tests.Domain
             }
         }
 
-        private static readonly IEqualityComparer<Person> AgeComparerInstance = new AgeEqualityComparer();
+        private static readonly IEqualityComparer<Person> s_ageComparerInstance = new AgeEqualityComparer();
 
-        public static IEqualityComparer<Person> AgeComparer => AgeComparerInstance;
+        public static IEqualityComparer<Person> AgeComparer => s_ageComparerInstance;
 
 
         private sealed class NameAgeGenderEqualityComparer : IEqualityComparer<Person>
@@ -96,22 +99,20 @@ namespace DynamicData.Tests.Domain
                 unchecked
                 {
                     var hashCode = (obj._name != null ? obj._name.GetHashCode() : 0);
-                    hashCode = (hashCode*397) ^ obj._age;
-                    hashCode = (hashCode*397) ^ (obj._gender != null ? obj._gender.GetHashCode() : 0);
+                    hashCode = (hashCode * 397) ^ obj._age;
+                    hashCode = (hashCode * 397) ^ (obj._gender != null ? obj._gender.GetHashCode() : 0);
                     return hashCode;
                 }
             }
         }
 
-        private static readonly IEqualityComparer<Person> NameAgeGenderComparerInstance = new NameAgeGenderEqualityComparer();
+        private static readonly IEqualityComparer<Person> s_nameAgeGenderComparerInstance = new NameAgeGenderEqualityComparer();
 
         public static IEqualityComparer<Person> NameAgeGenderComparer
         {
-            get { return NameAgeGenderComparerInstance; }
+            get { return s_nameAgeGenderComparerInstance; }
         }
 
         #endregion
-
-
     }
 }

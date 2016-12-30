@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using DynamicData.Annotations;
-using DynamicData.Internal;
 using DynamicData.Kernel;
 
-namespace DynamicData.Cache
+namespace DynamicData.Cache.Internal
 {
     internal class EditDiff<TObject, TKey>
     {
@@ -31,7 +30,7 @@ namespace DynamicData.Cache
                 var removes = originalItems.Except(newItems, _keyComparer).ToArray();
                 var adds = newItems.Except(originalItems, _keyComparer).ToArray();
 
-                //calculate intersect where the item have changed.
+                //calculate intersect where the item has changed.
                 var intersect = newItems
                         .Select(kvp => new { Original = innerCache.Lookup(kvp.Key), NewItem = kvp })
                         .Where(x => x.Original.HasValue && !_areEqual(x.Original.Value, x.NewItem.Value))

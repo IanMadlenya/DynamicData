@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using DynamicData.Kernel;
-
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     /// <summary>
@@ -42,7 +42,7 @@ namespace DynamicData
         /// </summary>
         /// <param name="updateAction">The update action.</param>
         /// <param name="errorHandler">The error handler.</param>
-        public void Edit(Action<IIntermediateUpdater<TObject, TKey>> updateAction, Action<Exception> errorHandler = null)
+        public void Edit(Action<ICacheUpdater<TObject, TKey>> updateAction, Action<Exception> errorHandler = null)
         {
             _innnerCache.UpdateFromIntermediate(updateAction, errorHandler);
         }
@@ -55,11 +55,11 @@ namespace DynamicData
         /// <summary>
         /// Returns a filtered changeset of cache changes preceeded with the initial state
         /// </summary>
-        /// <param name="filter">The filter.</param>
+        /// <param name="predicate">The precdicate.</param>
         /// <returns></returns>
-        public IObservable<IChangeSet<TObject, TKey>> Connect(Func<TObject, bool> filter)
+        public IObservable<IChangeSet<TObject, TKey>> Connect(Func<TObject, bool> predicate)
         {
-            return _innnerCache.Connect(filter);
+            return _innnerCache.Connect(predicate);
         }
 
         /// <summary>

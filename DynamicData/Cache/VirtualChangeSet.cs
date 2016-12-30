@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     internal sealed class VirtualChangeSet<TObject, TKey> : ChangeSet<TObject, TKey>, IVirtualChangeSet<TObject, TKey>, IEquatable<VirtualChangeSet<TObject, TKey>>
@@ -15,7 +15,7 @@ namespace DynamicData
             SortedItems = sortedItems;
             Response = response;
         }
-        
+
         #region Equality
 
         public bool Equals(VirtualChangeSet<TObject, TKey> other)

@@ -1,4 +1,5 @@
-﻿namespace DynamicData
+﻿// ReSharper disable once CheckNamespace
+namespace DynamicData
 {
     /// <summary>
     /// Defines values used to virtualise the result set

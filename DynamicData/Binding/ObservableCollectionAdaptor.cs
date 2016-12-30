@@ -1,8 +1,7 @@
 using System;
-using DynamicData.Aggregation;
 using DynamicData.Annotations;
+using DynamicData.Cache.Internal;
 using DynamicData.Internal;
-using DynamicData.Kernel;
 
 namespace DynamicData.Binding
 {
@@ -100,7 +99,7 @@ namespace DynamicData.Binding
         private void DoUpdate(IChangeSet<TObject, TKey> updates, IObservableCollection<TObject> list)
         {
             list.EnsureCapacityFor(updates);
-            foreach(var update in updates)
+            foreach (var update in updates)
             {
                 switch (update.Reason)
                 {

@@ -5,9 +5,10 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using DynamicData.Annotations;
-using DynamicData.Internal;
 using DynamicData.Kernel;
+using DynamicData.List.Internal;
 
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     /// <summary>
@@ -43,9 +44,9 @@ namespace DynamicData
 
         private IDisposable LoadFromSource(IObservable<IChangeSet<T>> source)
         {
-            return source
-                .Subscribe(changes => _readerWriter.Write(changes)
-                                                   .Then(InvokeNext, _changes.OnError), () => _changes.OnCompleted());
+            return source.Subscribe(changes => _readerWriter.Write(changes).Then(InvokeNext, _changes.OnError),
+                              _changes.OnError,
+                               () => _changes.OnCompleted());
         }
 
         /// <summary>
@@ -62,9 +63,7 @@ namespace DynamicData
             {
                 _readerWriter.Write(updateAction)
                     .Then(InvokeNext, errorHandler);
-
             }
-
         }
 
         private void InvokeNext(IChangeSet<T> changes)

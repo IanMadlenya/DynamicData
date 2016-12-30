@@ -106,7 +106,7 @@ namespace DynamicData.Tests.CacheFixtures
             _sortController.Reset();
 
             var expectedResult = people.OrderBy(p => p, _comparer).Select(p => new KeyValuePair<string, Person>(p.Name, p)).ToList();
-            var actualResult = _results.Messages[0].SortedItems.ToList();
+            var actualResult = _results.Messages[2].SortedItems.ToList();
             CollectionAssert.AreEquivalent(expectedResult, actualResult);
         }
     }

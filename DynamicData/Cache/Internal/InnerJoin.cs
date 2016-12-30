@@ -36,11 +36,11 @@ namespace DynamicData.Cache.Internal
                 var locker = new object();
 
                 //create local backing stores
-                var leftCache = _left.Synchronize(locker).AsObservableCache();
-                var rightCache = _right.Synchronize(locker).ChangeKey(_rightKeySelector).AsObservableCache();
+                var leftCache = _left.Synchronize(locker).AsObservableCache(false);
+                var rightCache = _right.Synchronize(locker).ChangeKey(_rightKeySelector).AsObservableCache(false);
 
                 //joined is the final cache
-                var joinedCache = new IntermediateCache<TDestination, TLeftKey>();
+                var joinedCache = new LockFreeObservableCache<TDestination, TLeftKey>();
 
                 var leftLoader = leftCache.Connect()
                     .Subscribe(changes =>
@@ -56,17 +56,17 @@ namespace DynamicData.Cache.Internal
                                 {
                                     case ChangeReason.Add:
                                     case ChangeReason.Update:
-                                    {
-                                        if (right.HasValue)
                                         {
-                                            innerCache.AddOrUpdate(_resultSelector(change.Key, left, right.Value), change.Key);
+                                            if (right.HasValue)
+                                            {
+                                                innerCache.AddOrUpdate(_resultSelector(change.Key, left, right.Value), change.Key);
+                                            }
+                                            else
+                                            {
+                                                innerCache.Remove(change.Key);
+                                            }
+                                            break;
                                         }
-                                        else
-                                        {
-                                            innerCache.Remove(change.Key);
-                                        }
-                                        break;
-                                    }
 
                                     case ChangeReason.Remove:
                                         innerCache.Remove(change.Key);
@@ -94,22 +94,21 @@ namespace DynamicData.Cache.Internal
                                 {
                                     case ChangeReason.Add:
                                     case ChangeReason.Update:
-                                    {
-                                        if (left.HasValue)
                                         {
-                                            innerCache.AddOrUpdate(_resultSelector(change.Key, left.Value, right), change.Key);
+                                            if (left.HasValue)
+                                            {
+                                                innerCache.AddOrUpdate(_resultSelector(change.Key, left.Value, right), change.Key);
+                                            }
+                                            else
+                                            {
+                                                innerCache.Remove(change.Key);
+                                            }
                                         }
-                                        else
-                                        {
-                                            innerCache.Remove(change.Key);
-                                        }
-
-                                    }
                                         break;
                                     case ChangeReason.Remove:
-                                    {
-                                        innerCache.Remove(change.Key);;
-                                    }
+                                        {
+                                            innerCache.Remove(change.Key); ;
+                                        }
                                         break;
                                     case ChangeReason.Evaluate:
                                         //propagate upstream
@@ -121,7 +120,7 @@ namespace DynamicData.Cache.Internal
                     });
 
                 return new CompositeDisposable(
-                    joinedCache.Connect().SubscribeSafe(observer),
+                    joinedCache.Connect().NotEmpty().SubscribeSafe(observer),
                     leftCache,
                     rightCache,
                     leftLoader,

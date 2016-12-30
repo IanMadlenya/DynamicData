@@ -1,4 +1,5 @@
-﻿namespace DynamicData
+﻿// ReSharper disable once CheckNamespace
+namespace DynamicData
 {
     /// <summary>
     ///  A grouped update collection

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
-using DynamicData.Operators;
-
+// ReSharper disable once CheckNamespace
 namespace DynamicData
 {
     /// <summary>
@@ -12,12 +11,12 @@ namespace DynamicData
         /// <summary>
         /// The default page request
         /// </summary>
-        public readonly static IPageRequest Default = new PageRequest();
+        public static readonly IPageRequest Default = new PageRequest();
 
         /// <summary>
         /// Represents an empty page
         /// </summary>
-        public readonly static IPageRequest Empty = new PageRequest(0, 0);
+        public static readonly IPageRequest Empty = new PageRequest(0, 0);
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PageRequest"/> class.
@@ -113,7 +112,7 @@ namespace DynamicData
             }
         }
 
-        private static readonly IEqualityComparer<IPageRequest> PageSizeComparerInstance = new PageSizeEqualityComparer();
+        private static readonly IEqualityComparer<IPageRequest> s_pageSizeComparerInstance = new PageSizeEqualityComparer();
 
         /// <summary>
         /// Gets the default comparer.
@@ -121,7 +120,7 @@ namespace DynamicData
         /// <value>
         /// The default comparer.
         /// </value>
-        public IEqualityComparer<IPageRequest> DefaultComparer => PageSizeComparerInstance;
+        public IEqualityComparer<IPageRequest> DefaultComparer => s_pageSizeComparerInstance;
 
         #endregion
 

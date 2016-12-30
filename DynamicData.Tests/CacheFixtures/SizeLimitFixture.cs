@@ -8,7 +8,7 @@ using NUnit.Framework;
 namespace DynamicData.Tests.CacheFixtures
 {
     [TestFixture]
-    class SizeLimitFixture
+    internal class SizeLimitFixture
     {
         private ISourceCache<Person, string> _source;
         private ChangeSetAggregator<Person, string> _results;
@@ -22,7 +22,7 @@ namespace DynamicData.Tests.CacheFixtures
         {
             _scheduler = new TestScheduler();
             _source = new SourceCache<Person, string>(p => p.Key);
-            _sizeLimiter = _source.LimitSizeTo(10, _scheduler).FinallySafe(() => Console.WriteLine()).Subscribe();
+            _sizeLimiter = _source.LimitSizeTo(10, _scheduler).Subscribe();
             _results = _source.Connect().AsAggregator();
         }
 
@@ -86,16 +86,15 @@ namespace DynamicData.Tests.CacheFixtures
         }
 
         [Test]
-        [ExpectedException(typeof(ArgumentException))]
         public void ThrowsIfSizeLimitIsZero()
         {
             // Initialise();
-
-            new SourceCache<Person, string>(p => p.Key).LimitSizeTo(0);
+            Assert.Throws<ArgumentException>(() => new SourceCache<Person, string>(p => p.Key).LimitSizeTo(0));
+            ;
         }
 
         [Test]
-        public void OnCompleteIsInvokedWhenFeederIsDisposed()
+        public void OnCompleteIsInvokedWhenSourceIsDisposed()
         {
             bool completed = false;
 
@@ -107,18 +106,5 @@ namespace DynamicData.Tests.CacheFixtures
 
             Assert.IsTrue(completed, "Completed has not been called");
         }
-
-        //[Test]
-        //public void OnCompleteIsInvokedWhenStreamIsDisposed()
-        //{
-        //    bool completed = false;
-
-        //    var subscriber = _source.LimitSizeTo(10)
-        //        .Subscribe(updates => { Console.WriteLine(); }, () => completed = true);
-
-        //    _source.Dispose();
-
-        //    Assert.IsTrue(completed, "Completed has not been called");
-        //}
     }
 }
