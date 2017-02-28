@@ -69,6 +69,7 @@
     <Compile Include="Binding\SortedObservableCollectionAdaptor.cs" />
     <Compile Include="Binding\SortExpression.cs" />
     <Compile Include="Binding\SortExpressionComparer.cs" />
+    <Compile Include="Cache\ChangeAwareCache.cs" />
     <Compile Include="Cache\ChangeReason.cs" />
     <Compile Include="Cache\ICacheUpdater.cs" />
     <Compile Include="Cache\IGrouping.cs" />
@@ -82,7 +83,6 @@
     <Compile Include="Cache\Internal\CacheEx.cs" />
     <Compile Include="Cache\Internal\CacheUpdater.cs" />
     <Compile Include="Cache\Internal\Cast.cs" />
-    <Compile Include="Cache\Internal\ChangeAwareCache.cs" />
     <Compile Include="Cache\Internal\CombineOperator.cs" />
     <Compile Include="Cache\Internal\Combiner.cs" />
     <Compile Include="Cache\Internal\DeferUntilLoaded.cs" />
@@ -142,6 +142,8 @@
     <Compile Include="Cache\Internal\Switch.cs" />
     <Compile Include="Cache\Internal\TimeExpirer.cs" />
     <Compile Include="Cache\Internal\ToObservableChangeSet.cs" />
+    <Compile Include="Cache\Internal\Transform.cs" />
+    <Compile Include="Cache\Internal\TransformAsync.cs" />
     <Compile Include="Cache\Internal\Transformer.cs" />
     <Compile Include="Cache\Internal\TransformMany.cs" />
     <Compile Include="Cache\Internal\TreeBuilder.cs" />
@@ -168,15 +170,17 @@
     <Compile Include="Kernel\Optional.cs" />
     <Compile Include="Kernel\OptionElse.cs" />
     <Compile Include="Kernel\OptionExtensions.cs" />
+    <Compile Include="Kernel\ParallelEx.cs" />
     <Compile Include="Kernel\ReadOnlyCollectionLight.cs" />
     <Compile Include="Kernel\ReferenceEqualityComparer.cs" />
     <Compile Include="List\Change.cs" />
+    <Compile Include="List\ChangeAwareList.cs" />
+    <Compile Include="List\ChangeAwareListWithRefCounts.cs" />
     <Compile Include="List\ChangeSetEx.cs" />
     <Compile Include="List\ChangeType.cs" />
     <Compile Include="List\IChangeSetAdaptor.cs" />
     <Compile Include="List\IGrouping.cs" />
     <Compile Include="List\Internal\BufferIf.cs" />
-    <Compile Include="List\Internal\ChangeAwareListWithRefCounts.cs" />
     <Compile Include="List\Internal\Combiner.cs" />
     <Compile Include="List\Internal\DeferUntilLoaded.cs" />
     <Compile Include="List\Internal\Distinct.cs" />
@@ -241,6 +245,7 @@
     <Compile Include="List\Internal\SubscribeMany.cs" />
     <Compile Include="List\Internal\Switch.cs" />
     <Compile Include="List\Internal\ToObservableChangeSet.cs" />
+    <Compile Include="List\Internal\TransformAsync.cs" />
     <Compile Include="List\Internal\Transformer.cs" />
     <Compile Include="List\Internal\TransformMany.cs" />
     <Compile Include="List\Internal\UnifiedChange.cs" />
@@ -257,7 +262,6 @@
     <Compile Include="List\Linq\AddKeyEnumerator.cs" />
     <Compile Include="List\ListEx.cs" />
     <Compile Include="List\IChangeSet.cs" />
-    <Compile Include="List\Internal\ChangeAwareList.cs" />
     <Compile Include="List\IObservableList.cs" />
     <Compile Include="List\ISourceList.cs" />
     <Compile Include="List\ObservableListEx.cs" />
