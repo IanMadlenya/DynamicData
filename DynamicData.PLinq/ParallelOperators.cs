@@ -34,9 +34,9 @@ namespace DynamicData.PLinq
         public static IObservable<IChangeSet<TObject, TKey>> SubscribeMany<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source,
                                                                                           Func<TObject, IDisposable> subscriptionFactory, ParallelisationOptions parallelisationOptions)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            if (subscriptionFactory == null) throw new ArgumentNullException("subscriptionFactory");
-            if (parallelisationOptions == null) throw new ArgumentNullException("parallelisationOptions");
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (subscriptionFactory == null) throw new ArgumentNullException(nameof(subscriptionFactory));
+            if (parallelisationOptions == null) throw new ArgumentNullException(nameof(parallelisationOptions));
 
             return Observable.Create<IChangeSet<TObject, TKey>>(
                 observer =>
@@ -72,9 +72,9 @@ namespace DynamicData.PLinq
         public static IObservable<IChangeSet<TObject, TKey>> SubscribeMany<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source,
                                                                                           Func<TObject, TKey, IDisposable> subscriptionFactory, ParallelisationOptions parallelisationOptions)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            if (subscriptionFactory == null) throw new ArgumentNullException("subscriptionFactory");
-            if (parallelisationOptions == null) throw new ArgumentNullException("parallelisationOptions");
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (subscriptionFactory == null) throw new ArgumentNullException(nameof(subscriptionFactory));
+            if (parallelisationOptions == null) throw new ArgumentNullException(nameof(parallelisationOptions));
 
             return Observable.Create<IChangeSet<TObject, TKey>>(
                 observer =>
@@ -120,9 +120,9 @@ namespace DynamicData.PLinq
                                                                                                          Func<TSource, TKey, TDestination> transformFactory,
                                                                                                          ParallelisationOptions parallelisationOptions)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            if (transformFactory == null) throw new ArgumentNullException("transformFactory");
-            if (parallelisationOptions == null) throw new ArgumentNullException("parallelisationOptions");
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
+            if (parallelisationOptions == null) throw new ArgumentNullException(nameof(parallelisationOptions));
 
             return Observable.Create<IChangeSet<TDestination, TKey>>(
                 observer =>
@@ -155,9 +155,9 @@ namespace DynamicData.PLinq
                                                                                                          Func<TSource, TDestination> transformFactory,
                                                                                                          ParallelisationOptions parallelisationOptions)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            if (transformFactory == null) throw new ArgumentNullException("transformFactory");
-            if (parallelisationOptions == null) throw new ArgumentNullException("parallelisationOptions");
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
+            if (parallelisationOptions == null) throw new ArgumentNullException(nameof(parallelisationOptions));
 
             return Observable.Create<IChangeSet<TDestination, TKey>>(
                 observer =>
@@ -198,10 +198,10 @@ namespace DynamicData.PLinq
                                                                                                              Action<Error<TSource, TKey>> errorHandler,
                                                                                                              ParallelisationOptions parallelisationOptions)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            if (transformFactory == null) throw new ArgumentNullException("transformFactory");
-            if (errorHandler == null) throw new ArgumentNullException("errorHandler");
-            if (parallelisationOptions == null) throw new ArgumentNullException("parallelisationOptions");
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
+            if (errorHandler == null) throw new ArgumentNullException(nameof(errorHandler));
+            if (parallelisationOptions == null) throw new ArgumentNullException(nameof(parallelisationOptions));
 
             return Observable.Create<IChangeSet<TDestination, TKey>>(
                 observer =>
@@ -238,9 +238,9 @@ namespace DynamicData.PLinq
                                                                                                              Action<Error<TSource, TKey>> errorHandler,
                                                                                                              ParallelisationOptions parallelisationOptions)
         {
-            if (source == null) throw new ArgumentNullException("source");
-            if (transformFactory == null) throw new ArgumentNullException("transformFactory");
-            if (errorHandler == null) throw new ArgumentNullException("errorHandler");
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
+            if (errorHandler == null) throw new ArgumentNullException(nameof(errorHandler));
 
             return Observable.Create<IChangeSet<TDestination, TKey>>(
                 observer =>
@@ -269,9 +269,9 @@ namespace DynamicData.PLinq
         /// <exception cref="System.ArgumentNullException">source</exception>
         public static IObservable<IChangeSet<TObject, TKey>> Filter<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source, Func<TObject, bool> filter, ParallelisationOptions parallelisationOptions)
         {
-            if (source == null) throw new ArgumentNullException("source");
+            if (source == null) throw new ArgumentNullException(nameof(source));
             if (filter == null)
-                return source.Clone();
+                return source;
 
             return Observable.Create<IChangeSet<TObject, TKey>>(
                 observer =>

@@ -157,12 +157,7 @@ namespace DynamicData
 
             return source.Select(changes =>
             {
-                var result = changes.Where(change =>
-                {
-                    if (change.Reason != ChangeReason.Update) return true;
-
-                    return includeFunction(change.Current, change.Previous.Value);
-                });
+                var result = changes.Where(change => change.Reason != ChangeReason.Update || includeFunction(change.Current, change.Previous.Value));
                 return new ChangeSet<TObject, TKey>(result);
             }).NotEmpty();
         }
@@ -998,50 +993,6 @@ namespace DynamicData
 
         #region Clone
 
-        internal static IObservable<IChangeSet<TObject, TKey>> Clone<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source, ICache<TObject, TKey> cache)
-        {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (cache == null) throw new ArgumentNullException(nameof(cache));
-
-            return source.Do(cache.Clone);
-        }
-
-        internal static IObservable<IChangeSet<TObject, TKey>> Clone<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source)
-        {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            var cache = new Cache<TObject, TKey>();
-            return source.Do(cache.Clone);
-        }
-
-        /// <summary>
-        /// Clones the list items to the specified collection
-        /// </summary>
-        /// <typeparam name="TObject">The type of the object.</typeparam>
-        /// <typeparam name="TKey">The type of the key.</typeparam>
-        /// <param name="source">The source.</param>
-        /// <param name="target">The target.</param>
-        /// <returns></returns>
-        public static IObservable<IChangeSet<TObject, TKey>> Clone<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source, [NotNull] IDictionary<TKey, TObject> target)
-        {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (target == null) throw new ArgumentNullException(nameof(target));
-            return source.Do(changes =>
-            {
-                foreach (var item in changes)
-                {
-                    switch (item.Reason)
-                    {
-                        case ChangeReason.Update:
-                        case ChangeReason.Add:
-                            target[item.Key] = item.Current;
-                            break;
-                        case ChangeReason.Remove:
-                            target.Remove(item.Key);
-                            break;
-                    }
-                }
-            });
-        }
 
         /// <summary>
         /// Clones the changes  into the specified collection
@@ -1066,7 +1017,6 @@ namespace DynamicData
                                 target.Add(item.Current);
                             }
                             break;
-
                         case ChangeReason.Update:
                             {
                                 target.Remove(item.Previous.Value);
@@ -1365,7 +1315,7 @@ namespace DynamicData
             Expression<Func<TObject, TProperty>> propertySelector,
             Func<TObject, bool> predicate,
             TimeSpan? propertyChangedThrottle = null,
-            IScheduler scheduler = null) 
+            IScheduler scheduler = null)
             where TObject : INotifyPropertyChanged
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
@@ -1389,8 +1339,7 @@ namespace DynamicData
         public static IObservable<ISortedChangeSet<TObject, TKey>> UpdateIndex<TObject, TKey>(this IObservable<ISortedChangeSet<TObject, TKey>> source)
             where TObject : IIndexAware
         {
-            return source.Do(changes => changes.SortedItems.Select((update, index) => new { update, index })
-                                        .ForEach(u => u.update.Value.Index = u.index));
+            return source.Do(changes => changes.SortedItems.Select((update, index) => new { update, index }).ForEach(u => u.update.Value.Index = u.index));
         }
 
         /// <summary>
@@ -2034,7 +1983,7 @@ namespace DynamicData
         /// <exception cref="System.ArgumentNullException">source
         /// or
         /// transformFactory</exception>
-        public static IObservable<IChangeSet<TDestination, TKey>> Transform<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, TDestination> transformFactory,IObservable<Func<TSource, bool>> forceTransform = null)
+        public static IObservable<IChangeSet<TDestination, TKey>> Transform<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, TDestination> transformFactory, IObservable<Func<TSource, bool>> forceTransform = null)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
@@ -2056,7 +2005,7 @@ namespace DynamicData
         /// <exception cref="System.ArgumentNullException">source
         /// or
         /// transformFactory</exception>
-        public static IObservable<IChangeSet<TDestination, TKey>> Transform<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, TKey, TDestination> transformFactory,IObservable<Func<TSource, TKey, bool>> forceTransform = null)
+        public static IObservable<IChangeSet<TDestination, TKey>> Transform<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, TKey, TDestination> transformFactory, IObservable<Func<TSource, TKey, bool>> forceTransform = null)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
@@ -2078,7 +2027,7 @@ namespace DynamicData
         /// <exception cref="System.ArgumentNullException">source
         /// or
         /// transformFactory</exception>
-        public static IObservable<IChangeSet<TDestination, TKey>> Transform<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source,Func<TSource, Optional<TSource>, TKey, TDestination> transformFactory,IObservable<Func<TSource, TKey, bool>> forceTransform = null)
+        public static IObservable<IChangeSet<TDestination, TKey>> Transform<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, Optional<TSource>, TKey, TDestination> transformFactory, IObservable<Func<TSource, TKey, bool>> forceTransform = null)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
@@ -2101,9 +2050,9 @@ namespace DynamicData
         /// <exception cref="System.ArgumentNullException">source
         /// or
         /// transformFactory</exception>
-        public static IObservable<IChangeSet<TDestination, TKey>> Transform<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, TDestination> transformFactory, IObservable<Unit> forceTransform) 
+        public static IObservable<IChangeSet<TDestination, TKey>> Transform<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, TDestination> transformFactory, IObservable<Unit> forceTransform)
         {
-            return source.Transform((cur,prev,key)=> transformFactory(cur), forceTransform.ForForced<TSource, TKey>());
+            return source.Transform((cur, prev, key) => transformFactory(cur), forceTransform.ForForced<TSource, TKey>());
         }
 
 
@@ -2128,7 +2077,7 @@ namespace DynamicData
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
             if (forceTransform == null) throw new ArgumentNullException(nameof(forceTransform));
 
-            return source.Transform((cur, prev, key) => transformFactory(cur,key), forceTransform.ForForced<TSource, TKey>());
+            return source.Transform((cur, prev, key) => transformFactory(cur, key), forceTransform.ForForced<TSource, TKey>());
         }
 
         /// <summary>
@@ -2334,31 +2283,20 @@ namespace DynamicData
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <param name="source">The source.</param>
         /// <param name="transformFactory">The transform factory.</param>
-        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.
-        ///  If not specified the stream will terminate as per rx convention.
-        /// </param>
         /// <param name="forceTransform">Invoke to force a new transform for items matching the selected objects</param>
+        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.</param>
         /// <returns>
         /// A transformed update collection
         /// </returns>
         /// <exception cref="System.ArgumentNullException">source
         /// or
         /// transformFactory</exception>
-        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source,
-                                                                                                             Func<TSource, TDestination> transformFactory,
-                                                                                                             Action<Error<TSource, TKey>> errorHandler,
-                                                                                                             IObservable<Unit> forceTransform)
+        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, TDestination> transformFactory, Action<Error<TSource, TKey>> errorHandler, IObservable<Func<TSource, bool>> forceTransform = null)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
             if (errorHandler == null) throw new ArgumentNullException(nameof(errorHandler));
-            if (forceTransform == null) throw new ArgumentNullException(nameof(forceTransform));
-
-            return source.TransformSafe(transformFactory, errorHandler, forceTransform.Select(x =>
-            {
-                Func<TSource, bool> shouldForceItem = t => true;
-                return shouldForceItem;
-            }));
+            return source.TransformSafe((current, previous, key) => transformFactory(current), errorHandler, forceTransform.ForForced<TSource, TKey>());
         }
 
         /// <summary>
@@ -2370,43 +2308,20 @@ namespace DynamicData
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <param name="source">The source.</param>
         /// <param name="transformFactory">The transform factory.</param>
-        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.
-        ///  If not specified the stream will terminate as per rx convention.
-        /// </param>
         /// <param name="forceTransform">Invoke to force a new transform for items matching the selected objects</param>
+        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.</param>
         /// <returns>
         /// A transformed update collection
         /// </returns>
         /// <exception cref="System.ArgumentNullException">source
         /// or
         /// transformFactory</exception>
-        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source,
-                                                                                                             Func<TSource, TDestination> transformFactory,
-                                                                                                             Action<Error<TSource, TKey>> errorHandler,
-                                                                                                             IObservable<Func<TSource, bool>> forceTransform = null)
+        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, TKey, TDestination> transformFactory, Action<Error<TSource, TKey>> errorHandler, IObservable<Func<TSource, TKey, bool>> forceTransform = null)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
             if (errorHandler == null) throw new ArgumentNullException(nameof(errorHandler));
-
-            return Observable.Create<IChangeSet<TDestination, TKey>>(observer =>
-            {
-                var transformer = new Transformer<TDestination, TSource, TKey>(errorHandler);
-                var transformed = source
-                    .Select(updates => transformer.Transform(updates, transformFactory));
-
-                if (forceTransform != null)
-                {
-                    var locker = new object();
-                    var forced = forceTransform
-                        .Synchronize(locker)
-                        .Select(shouldTransform => transformer.ForceTransform(shouldTransform, transformFactory));
-
-                    transformed = transformed.Synchronize(locker).Merge(forced);
-                }
-
-                return transformed.NotEmpty().SubscribeSafe(observer);
-            });
+            return source.TransformSafe((current, previous, key) => transformFactory(current, key), errorHandler, forceTransform);
         }
 
         /// <summary>
@@ -2418,44 +2333,24 @@ namespace DynamicData
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <param name="source">The source.</param>
         /// <param name="transformFactory">The transform factory.</param>
-        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.
-        ///  If not specified the stream will terminate as per rx convention.
-        /// </param>
         /// <param name="forceTransform">Invoke to force a new transform for items matching the selected objects</param>
+        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.</param>
         /// <returns>
         /// A transformed update collection
         /// </returns>
         /// <exception cref="System.ArgumentNullException">source
         /// or
         /// transformFactory</exception>
-        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source,
-            Func<TSource, TKey, TDestination> transformFactory,
-            Action<Error<TSource, TKey>> errorHandler,
+        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, 
+            Func<TSource, Optional<TSource>, TKey, TDestination> transformFactory, 
+            Action<Error<TSource, TKey>> errorHandler, 
             IObservable<Func<TSource, TKey, bool>> forceTransform = null)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
             if (errorHandler == null) throw new ArgumentNullException(nameof(errorHandler));
 
-            return Observable.Create<IChangeSet<TDestination, TKey>>(observer =>
-            {
-                var transformer = new Transformer<TDestination, TSource, TKey>(errorHandler);
-
-                var transformed = source
-                    .Select(updates => transformer.Transform(updates, transformFactory));
-
-                if (forceTransform != null)
-                {
-                    var locker = new object();
-                    var forced = forceTransform
-                        .Synchronize(locker)
-                        .Select(shouldTransform => transformer.ForceTransform(shouldTransform, transformFactory));
-
-                    transformed = transformed.Synchronize(locker).Merge(forced);
-                }
-
-                return transformed.NotEmpty().SubscribeSafe(observer);
-            });
+            return new Transform<TDestination, TSource, TKey>(source, transformFactory, errorHandler, forceTransform).Run();
         }
 
         /// <summary>
@@ -2467,10 +2362,31 @@ namespace DynamicData
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <param name="source">The source.</param>
         /// <param name="transformFactory">The transform factory.</param>
-        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.
-        ///  If not specified the stream will terminate as per rx convention.
-        /// </param>
         /// <param name="forceTransform">Invoke to force a new transform for all items</param>
+        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.</param>
+        /// <returns>
+        /// A transformed update collection
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">source
+        /// or
+        /// transformFactory</exception>
+        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, Func<TSource, TDestination> transformFactory, Action<Error<TSource, TKey>> errorHandler, IObservable<Unit> forceTransform)
+        {
+            return source.TransformSafe((cur, prev, key) => transformFactory(cur), errorHandler, forceTransform.ForForced<TSource, TKey>());
+        }
+
+
+        /// <summary>
+        /// Projects each update item to a new form using the specified transform function,
+        /// providing an error handling action to safely handle transform errors without killing the stream.
+        /// </summary>
+        /// <typeparam name="TDestination">The type of the destination.</typeparam>
+        /// <typeparam name="TSource">The type of the source.</typeparam>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="transformFactory">The transform factory.</param>
+        /// <param name="forceTransform">Invoke to force a new transform for all items</param>#
+        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.</param>
         /// <returns>
         /// A transformed update collection
         /// </returns>
@@ -2478,20 +2394,44 @@ namespace DynamicData
         /// or
         /// transformFactory</exception>
         public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source,
-                                                                                                             Func<TSource, TKey, TDestination> transformFactory,
-                                                                                                             Action<Error<TSource, TKey>> errorHandler,
-                                                                                                             IObservable<Unit> forceTransform)
+            Func<TSource, TKey, TDestination> transformFactory, Action<Error<TSource, TKey>> errorHandler, IObservable<Unit> forceTransform)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
             if (forceTransform == null) throw new ArgumentNullException(nameof(forceTransform));
 
-            return source.TransformSafe(transformFactory, errorHandler, forceTransform.Select(x =>
-            {
-                Func<TSource, TKey, bool> shouldForceItem = (t, k) => true;
-                return shouldForceItem;
-            }));
+            return source.TransformSafe((cur, prev, key) => transformFactory(cur, key), errorHandler, forceTransform.ForForced<TSource, TKey>());
         }
+
+        /// <summary>
+        /// Projects each update item to a new form using the specified transform function,
+        /// providing an error handling action to safely handle transform errors without killing the stream.
+        /// </summary>
+        /// <typeparam name="TDestination">The type of the destination.</typeparam>
+        /// <typeparam name="TSource">The type of the source.</typeparam>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="transformFactory">The transform factory.</param>
+        /// <param name="forceTransform">Invoke to force a new transform for all items</param>#
+        /// <param name="errorHandler">Provides the option to safely handle errors without killing the stream.</param>
+        /// <returns>
+        /// A transformed update collection
+        /// </returns>
+        /// <exception cref="System.ArgumentNullException">source
+        /// or
+        /// transformFactory</exception>
+        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source,
+            Func<TSource, Optional<TSource>, TKey, TDestination> transformFactory,
+            Action<Error<TSource, TKey>> errorHandler,
+            IObservable<Unit> forceTransform)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
+            if (forceTransform == null) throw new ArgumentNullException(nameof(forceTransform));
+
+            return source.TransformSafe(transformFactory, errorHandler, forceTransform.ForForced<TSource, TKey>());
+        }
+
 
         #endregion
 
@@ -3002,7 +2942,7 @@ namespace DynamicData
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">source</exception>
         public static IObservable<IChangeSet<TObject, TKey>> Bind<TObject, TKey>(this IObservable<ISortedChangeSet<TObject, TKey>> source,
-                                                                                 out ReadOnlyObservableCollection<TObject> readOnlyObservableCollection, 
+                                                                                 out ReadOnlyObservableCollection<TObject> readOnlyObservableCollection,
                                                                                  int resetThreshold = 25,
                                                                                  ISortedObservableCollectionAdaptor<TObject, TKey> adaptor = null)
         {
@@ -3027,7 +2967,7 @@ namespace DynamicData
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">source</exception>
         public static IObservable<IChangeSet<TObject, TKey>> Bind<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source,
-                                                                                 out ReadOnlyObservableCollection<TObject> readOnlyObservableCollection, 
+                                                                                 out ReadOnlyObservableCollection<TObject> readOnlyObservableCollection,
                                                                                  int resetThreshold = 25,
                                                                                  IObservableCollectionAdaptor<TObject, TKey> adaptor = null)
         {
@@ -4161,7 +4101,7 @@ namespace DynamicData
         public static IObservable<IChangeSet<TObject, TKey>> Switch<TObject, TKey>(this IObservable<IObservableCache<TObject, TKey>> sources)
         {
             if (sources == null) throw new ArgumentNullException(nameof(sources));
-            return sources.Select(cache=>cache.Connect()).Switch();
+            return sources.Select(cache => cache.Connect()).Switch();
         }
         /// <summary>
         /// Transforms an observable sequence of observable changes sets into an observable sequence
@@ -4184,7 +4124,7 @@ namespace DynamicData
             return new Switch<TObject, TKey>(sources).Run();
 
         }
-        
+
         #endregion
     }
 }

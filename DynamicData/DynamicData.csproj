@@ -75,7 +75,6 @@
     <Compile Include="Cache\IGrouping.cs" />
     <Compile Include="Cache\IImmutableGroupChangeSet.cs" />
     <Compile Include="Cache\Internal\AbstractFilter.cs" />
-    <Compile Include="Cache\Internal\AbstractTransformer.cs" />
     <Compile Include="Cache\Internal\AnonymousObservableCache.cs" />
     <Compile Include="Cache\Internal\AnonymousQuery.cs" />
     <Compile Include="Cache\Internal\BatchIf.cs" />
@@ -144,7 +143,6 @@
     <Compile Include="Cache\Internal\ToObservableChangeSet.cs" />
     <Compile Include="Cache\Internal\Transform.cs" />
     <Compile Include="Cache\Internal\TransformAsync.cs" />
-    <Compile Include="Cache\Internal\Transformer.cs" />
     <Compile Include="Cache\Internal\TransformMany.cs" />
     <Compile Include="Cache\Internal\TreeBuilder.cs" />
     <Compile Include="Cache\Internal\TrueFor.cs" />

@@ -43,7 +43,9 @@ namespace DynamicData.Cache.Internal
                             .Select(_ => grouper.Regroup())
                             .Where(changes => changes.Count != 0);
 
-                        var published = groups.Merge(regroup).Publish();
+                        var published = groups.Merge(regroup)
+                            .Where(changes => changes.Count != 0).Publish();
+
                         var subscriber = published.SubscribeSafe(observer);
                         var disposer = published.DisposeMany().Subscribe();
 
@@ -119,8 +121,7 @@ namespace DynamicData.Cache.Internal
                                         //check whether the previous item was in a different group. If so remove from old group
                                         var previous = _itemCache.Lookup(current.Key)
                                             .ValueOrThrow(() => new MissingKeyException("{0} is missing from previous value on update. Object type {1}, Key type {2}, Group key type {3}"
-                                                        .FormatWith(current.Key, typeof(TObject), typeof(TKey),
-                                                            typeof(TGroupKey))));
+                                                        .FormatWith(current.Key, typeof(TObject), typeof(TKey), typeof(TGroupKey))));
 
                                         if (previous.GroupKey.Equals(current.GroupKey)) return;
 
