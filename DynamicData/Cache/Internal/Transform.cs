@@ -13,8 +13,8 @@ namespace DynamicData.Cache.Internal
         private readonly IObservable<Func<TSource, TKey, bool>> _forceTransform;
         private readonly Action<Error<TSource, TKey>> _exceptionCallback;
 
-        public Transform(IObservable<IChangeSet<TSource, TKey>> source,
-            Func<TSource, Optional<TSource>, TKey, TDestination> transformFactory,
+        public Transform(IObservable<IChangeSet<TSource, TKey>> source, 
+            Func<TSource, Optional<TSource>, TKey, TDestination> transformFactory, 
             Action<Error<TSource, TKey>> exceptionCallback = null,
             IObservable<Func<TSource, TKey, bool>> forceTransform = null)
         {
@@ -44,7 +44,7 @@ namespace DynamicData.Cache.Internal
             });
         }
 
-        private IChangeSet<TDestination, TKey> DoTransform(ChangeAwareCache<TransformedItemContainer, TKey> cache, Func<TSource, TKey, bool> shouldTransform)
+        private  IChangeSet<TDestination, TKey> DoTransform(ChangeAwareCache<TransformedItemContainer, TKey> cache, Func<TSource, TKey, bool> shouldTransform)
         {
             var toTransform = cache.KeyValues
                 .Where(kvp => shouldTransform(kvp.Value.Source, kvp.Key))
@@ -55,7 +55,7 @@ namespace DynamicData.Cache.Internal
             return ProcessUpdates(cache, transformed.ToArray());
         }
 
-        private IChangeSet<TDestination, TKey> DoTransform(ChangeAwareCache<TransformedItemContainer, TKey> cache, IChangeSet<TSource, TKey> changes)
+        private  IChangeSet<TDestination, TKey> DoTransform(ChangeAwareCache<TransformedItemContainer, TKey> cache, IChangeSet<TSource, TKey> changes)
         {
             var transformed = TransformChanges(cache, changes);
             return ProcessUpdates(cache, transformed.ToArray());
@@ -63,10 +63,10 @@ namespace DynamicData.Cache.Internal
 
         protected virtual TransformResult[] TransformChanges(ChangeAwareCache<TransformedItemContainer, TKey> cache, IEnumerable<Change<TSource, TKey>> changes)
         {
-            return changes.Select(Select).AsArray();
+            return changes.Select(Select).AsArray();  
         }
-
-        private TransformResult Select(Change<TSource, TKey> change)
+ 
+        private  TransformResult Select(Change<TSource, TKey> change)
         {
             try
             {
@@ -86,7 +86,7 @@ namespace DynamicData.Cache.Internal
             }
         }
 
-        private IChangeSet<TDestination, TKey> ProcessUpdates(ChangeAwareCache<TransformedItemContainer, TKey> cache, TransformResult[] transformedItems)
+        private  IChangeSet<TDestination, TKey> ProcessUpdates(ChangeAwareCache<TransformedItemContainer, TKey> cache, TransformResult[] transformedItems)
         {
             //check for errors and callback if a handler has been specified
             var errors = transformedItems.Where(t => !t.Success).ToArray();
@@ -130,9 +130,9 @@ namespace DynamicData.Cache.Internal
             public Exception Error { get; }
             public bool Success { get; }
             public Optional<TransformedItemContainer> Container { get; }
-            public TKey Key { get; }
+            public TKey Key { get;  }
 
-            public TransformResult(Change<TSource, TKey> change, TransformedItemContainer container)
+            public TransformResult(Change<TSource, TKey> change, TransformedItemContainer  container)
             {
                 Change = change;
                 Container = container;

@@ -44,8 +44,7 @@ namespace DynamicData.Cache.Internal
                             .Where(changes => changes.Count != 0);
 
                         var published = groups.Merge(regroup)
-                            .Where(changes => changes.Count != 0).Publish();
-
+                        .Where(changes => changes.Count != 0).Publish();
                         var subscriber = published.SubscribeSafe(observer);
                         var disposer = published.DisposeMany().Subscribe();
 
@@ -121,7 +120,8 @@ namespace DynamicData.Cache.Internal
                                         //check whether the previous item was in a different group. If so remove from old group
                                         var previous = _itemCache.Lookup(current.Key)
                                             .ValueOrThrow(() => new MissingKeyException("{0} is missing from previous value on update. Object type {1}, Key type {2}, Group key type {3}"
-                                                        .FormatWith(current.Key, typeof(TObject), typeof(TKey), typeof(TGroupKey))));
+                                                        .FormatWith(current.Key, typeof(TObject), typeof(TKey),
+                                                            typeof(TGroupKey))));
 
                                         if (previous.GroupKey.Equals(current.GroupKey)) return;
 
@@ -211,6 +211,14 @@ namespace DynamicData.Cache.Internal
                 });
                 return new GroupChangeSet<TObject, TKey, TGroupKey>(result);
             }
+
+            //private Exception CreateMissingKeyException(ChangeReason reason, TKey key)
+            //{
+            //    var message = $"{key} is missing. The change reason is '{reason}'." +
+            //                  $"{Environment.NewLine}Object type {typeof(TObject)}, Key type {typeof(TKey)}";
+            //    return new MissingKeyException(message);
+            //}
+
 
             private Tuple<ManagedGroup<TObject, TKey, TGroupKey>, bool> GetCache(TGroupKey key)
             {

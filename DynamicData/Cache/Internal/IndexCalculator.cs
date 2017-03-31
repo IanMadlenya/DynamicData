@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using DynamicData.Kernel;
-
 
 namespace DynamicData.Cache.Internal
 {
@@ -11,7 +9,7 @@ namespace DynamicData.Cache.Internal
     /// This enables the binding infrastructure to simply iterate the change set
     /// and apply indexed changes with no need to apply ant expensive IndexOf() operations.
     /// </summary>
-    internal sealed class IndexCalculator<TObject, TKey> : IIndexCalculator<TObject, TKey>
+    internal sealed class IndexCalculator<TObject, TKey>
     {
         private KeyValueComparer<TObject, TKey> _comparer;
         private List<KeyValuePair<TKey, TObject>> _list;
@@ -55,7 +53,6 @@ namespace DynamicData.Cache.Internal
         public IChangeSet<TObject, TKey> ChangeComparer(KeyValueComparer<TObject, TKey> comparer)
         {
             _comparer = comparer;
-            _list = _list.OrderBy(kv => kv, _comparer).ToList();
             return ChangeSet<TObject, TKey>.Empty;
         }
 

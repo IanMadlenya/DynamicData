@@ -11,14 +11,13 @@ namespace DynamicData.PLinq
         private readonly Action<Error<TSource, TKey>> _exceptionCallback;
         private readonly ChangeAwareCache<TransformedItemContainer, TKey> _innerCache = new ChangeAwareCache<TransformedItemContainer, TKey>();
 
-
         public PlinqTransformer(ParallelisationOptions parallelisationOptions, Action<Error<TSource, TKey>> exceptionCallback)
         {
             _parallelisationOptions = parallelisationOptions;
             _exceptionCallback = exceptionCallback;
         }
 
-        protected  IChangeSet<TDestination, TKey> DoTransform(IChangeSet<TSource, TKey> updates, Func<Change<TSource, TKey>, Optional<TransformResult>> factory)
+        protected IChangeSet<TDestination, TKey> DoTransform(IChangeSet<TSource, TKey> updates, Func<Change<TSource, TKey>, Optional<TransformResult>> factory)
         {
             var transformed = updates.ShouldParallelise(_parallelisationOptions)
                 ? updates.Parallelise(_parallelisationOptions).Select(factory).SelectValues().ToArray()
@@ -27,7 +26,7 @@ namespace DynamicData.PLinq
             return ProcessUpdates(transformed);
         }
 
-        protected  IChangeSet<TDestination, TKey> DoTransform(IEnumerable<KeyValuePair<TKey, TSource>> items, Func<KeyValuePair<TKey, TSource>, TransformResult> factory)
+        protected IChangeSet<TDestination, TKey> DoTransform(IEnumerable<KeyValuePair<TKey, TSource>> items, Func<KeyValuePair<TKey, TSource>, TransformResult> factory)
         {
             var keyValuePairs = items.AsArray();
 

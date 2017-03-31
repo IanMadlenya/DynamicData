@@ -16,6 +16,7 @@ using DynamicData.Cache;
 using DynamicData.Cache.Internal;
 using DynamicData.Controllers;
 using DynamicData.Kernel;
+
 // ReSharper disable once CheckNamespace
 namespace DynamicData
 {
@@ -2341,9 +2342,9 @@ namespace DynamicData
         /// <exception cref="System.ArgumentNullException">source
         /// or
         /// transformFactory</exception>
-        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source, 
-            Func<TSource, Optional<TSource>, TKey, TDestination> transformFactory, 
-            Action<Error<TSource, TKey>> errorHandler, 
+        public static IObservable<IChangeSet<TDestination, TKey>> TransformSafe<TDestination, TSource, TKey>(this IObservable<IChangeSet<TSource, TKey>> source,
+            Func<TSource, Optional<TSource>, TKey, TDestination> transformFactory,
+            Action<Error<TSource, TKey>> errorHandler,
             IObservable<Func<TSource, TKey, bool>> forceTransform = null)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
