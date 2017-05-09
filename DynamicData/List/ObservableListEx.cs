@@ -11,6 +11,7 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using DynamicData.Annotations;
 using DynamicData.Binding;
+using DynamicData.Cache;
 using DynamicData.Cache.Internal;
 using DynamicData.Controllers;
 using DynamicData.Kernel;
@@ -359,7 +360,19 @@ namespace DynamicData
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (adaptor == null) throw new ArgumentNullException(nameof(adaptor));
-            return source.Do(adaptor.Adapt);
+
+
+            return Observable.Create<IChangeSet<T>>(observer =>
+            {
+                var locker = new object();
+                return source
+                    .Synchronize(locker)
+                    .Select(changes =>
+                    {
+                        adaptor.Adapt(changes);
+                        return changes;
+                    }).SubscribeSafe(observer);
+            });
         }
 
         #endregion
@@ -503,8 +516,7 @@ namespace DynamicData
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
-        public static IObservable<IChangeSet<TObject>> FilterOnProperty<TObject, TProperty>(
-            this IObservable<IChangeSet<TObject>> source,
+        public static IObservable<IChangeSet<TObject>> FilterOnProperty<TObject, TProperty>(this IObservable<IChangeSet<TObject>> source,
             Expression<Func<TObject, TProperty>> propertySelector,
             Func<TObject, bool> predicate,
             TimeSpan? propertyChangedThrottle = null,
@@ -721,8 +733,7 @@ namespace DynamicData
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
-        public static IObservable<IChangeSet<List.IGrouping<TObject, TGroup>>> GroupOnPropertyWithImmutableState
-            <TObject, TGroup>(this IObservable<IChangeSet<TObject>> source,
+        public static IObservable<IChangeSet<List.IGrouping<TObject, TGroup>>> GroupOnPropertyWithImmutableState<TObject, TGroup>(this IObservable<IChangeSet<TObject>> source,
                 Expression<Func<TObject, TGroup>> propertySelector,
                 TimeSpan? propertyChangedThrottle = null,
                 IScheduler scheduler = null)
@@ -939,16 +950,16 @@ namespace DynamicData
         /// </summary>
         /// <typeparam name="TObject">The type of the object.</typeparam>
         /// <param name="source">The source.</param>
+        /// <param name="propertiesToMonitor">specify properties to Monitor, or omit to monitor all property changes</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
-        public static IObservable<TObject> WhenAnyPropertyChanged<TObject>(
-            [NotNull] this IObservable<IChangeSet<TObject>> source)
+        public static IObservable<TObject> WhenAnyPropertyChanged<TObject>([NotNull] this IObservable<IChangeSet<TObject>> source, params string[] propertiesToMonitor)
             where TObject : INotifyPropertyChanged
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
-            return source.MergeMany(t => t.WhenAnyPropertyChanged());
+            return source.MergeMany(t => t.WhenAnyPropertyChanged(propertiesToMonitor));
         }
 
         /// <summary>
@@ -1204,8 +1215,7 @@ namespace DynamicData
         /// <param name="source">The source.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">source</exception>
-        public static IObservable<IReadOnlyCollection<T>> QueryWhenChanged<T>(
-            [NotNull] this IObservable<IChangeSet<T>> source)
+        public static IObservable<IReadOnlyCollection<T>> QueryWhenChanged<T>([NotNull] this IObservable<IChangeSet<T>> source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             return new QueryWhenChanged<T>(source).Run();
@@ -1217,8 +1227,7 @@ namespace DynamicData
         /// <typeparam name="TObject">The type of the object.</typeparam>
         /// <param name="source">The source.</param>
         /// <returns></returns>
-        public static IObservable<IReadOnlyCollection<TObject>> ToCollection<TObject>(
-            this IObservable<IChangeSet<TObject>> source)
+        public static IObservable<IReadOnlyCollection<TObject>> ToCollection<TObject>(this IObservable<IChangeSet<TObject>> source)
         {
             return source.QueryWhenChanged(items => items);
         }
@@ -1759,6 +1768,21 @@ namespace DynamicData
             if (sources == null) throw new ArgumentNullException(nameof(sources));
             return new Switch<T>(sources).Run();
         }
+
+        #endregion
+
+
+        #region Start with
+
+        /// <summary>
+        /// Prepends an empty changeset to the source
+        /// </summary>
+        public static IObservable<IChangeSet<T>> StartWithEmpty<T>(this IObservable<IChangeSet<T>> source)
+        {
+            return source.StartWith(ChangeSet<T>.Empty);
+        }
+
+
 
         #endregion
     }

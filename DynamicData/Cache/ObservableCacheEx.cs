@@ -23,6 +23,7 @@ namespace DynamicData
     /// <summary>
     /// Extensions for dynamic data
     /// </summary>
+    [PublicAPI]
     public static class ObservableCacheEx
     {
         #region General
@@ -302,16 +303,17 @@ namespace DynamicData
         /// </summary>
         /// <typeparam name="TObject">The type of the object.</typeparam>
         /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <param name="propertiesToMonitor">specify properties to Monitor, or omit to monitor all property changes</param>
         /// <param name="source">The source.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
-        public static IObservable<TObject> WhenAnyPropertyChanged<TObject, TKey>([NotNull] this IObservable<IChangeSet<TObject, TKey>> source)
+        public static IObservable<TObject> WhenAnyPropertyChanged<TObject, TKey>([NotNull] this IObservable<IChangeSet<TObject, TKey>> source, params string[] propertiesToMonitor)
             where TObject : INotifyPropertyChanged
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
-            return source.MergeMany(t => t.WhenAnyPropertyChanged());
+            return source.MergeMany(t => t.WhenAnyPropertyChanged(propertiesToMonitor));
         }
 
         /// <summary>
@@ -458,8 +460,7 @@ namespace DynamicData
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">reasons</exception>
         /// <exception cref="System.ArgumentException">Must select at least on reason</exception>
-        public static IObservable<IChangeSet<TObject, TKey>> WhereReasonsAreNot<TObject, TKey>(
-            this IObservable<IChangeSet<TObject, TKey>> source, params ChangeReason[] reasons)
+        public static IObservable<IChangeSet<TObject, TKey>> WhereReasonsAreNot<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source, params ChangeReason[] reasons)
         {
             if (reasons == null) throw new ArgumentNullException(nameof(reasons));
             if (!reasons.Any()) throw new ArgumentException("Must select at least one reason");
@@ -470,6 +471,71 @@ namespace DynamicData
             {
                 return new ChangeSet<TObject, TKey>(updates.Where(u => !hashed.Contains(u.Reason)));
             }).NotEmpty();
+        }
+        
+        #endregion
+
+        #region Start with
+        
+        /// <summary>
+        /// Prepends an empty changeset to the source
+        /// </summary>
+        public static IObservable<IChangeSet<TObject, TKey>> StartWithEmpty<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source)
+        {
+            return source.StartWith(ChangeSet<TObject, TKey>.Empty);
+        }
+
+        /// <summary>
+        /// Prepends an empty changeset to the source
+        /// </summary>
+        /// <returns></returns>
+        public static IObservable<ISortedChangeSet<TObject, TKey>> StartWithEmpty<TObject, TKey>(this IObservable<ISortedChangeSet<TObject, TKey>> source)
+        {
+            return source.StartWith(SortedChangeSet<TObject, TKey>.Empty);
+        }
+
+        /// <summary>
+        /// Prepends an empty changeset to the source
+        /// </summary>
+        /// <returns></returns>
+        public static IObservable<IVirtualChangeSet<TObject, TKey>> StartWithEmpty<TObject, TKey>(this IObservable<IVirtualChangeSet<TObject, TKey>> source)
+        {
+            return source.StartWith(VirtualChangeSet<TObject, TKey>.Empty);
+        }
+
+        /// <summary>
+        /// Prepends an empty changeset to the source
+        /// </summary>
+        /// <returns></returns>
+        public static IObservable<IPagedChangeSet<TObject, TKey>> StartWithEmpty<TObject, TKey>(this IObservable<IPagedChangeSet<TObject, TKey>> source)
+        {
+            return source.StartWith(PagedChangeSet<TObject, TKey>.Empty);
+        }
+
+        /// <summary>
+        /// Prepends an empty changeset to the source
+        /// </summary>
+        /// <returns></returns>
+        public static IObservable<IGroupChangeSet<TObject, TKey, TGroupKey>> StartWithEmpty<TObject, TKey, TGroupKey>(this IObservable<IGroupChangeSet<TObject, TKey, TGroupKey>> source)
+        {
+            return source.StartWith(GroupChangeSet<TObject, TKey, TGroupKey>.Empty);
+        }
+
+        /// <summary>
+        /// Prepends an empty changeset to the source
+        /// </summary>
+        /// <returns></returns>
+        public static IObservable<IImmutableGroupChangeSet<TObject, TKey, TGroupKey>> StartWithEmpty<TObject, TKey, TGroupKey>(this IObservable<IImmutableGroupChangeSet<TObject, TKey, TGroupKey>> source)
+        {
+            return source.StartWith(ImmutableGroupChangeSet<TObject, TKey, TGroupKey>.Empty);
+        }
+
+        /// <summary>
+        /// Prepends an empty changeset to the source
+        /// </summary>
+        public static IObservable<IReadOnlyCollection<T>> StartWithEmpty<T>(this IObservable<IReadOnlyCollection<T>> source)
+        {
+            return source.StartWith(ReadOnlyCollectionLight<T>.Empty);
         }
 
         #endregion
@@ -939,7 +1005,7 @@ namespace DynamicData
         /// <returns></returns>
         public static IObservable<IReadOnlyCollection<TObject>> ToCollection<TObject, TKey>(this IObservable<IChangeSet<TObject, TKey>> source)
         {
-            return source.QueryWhenChanged(query => new ReadOnlyCollectionLight<TObject>(query.Items, query.Count));
+            return source.QueryWhenChanged(query => new ReadOnlyCollectionLight<TObject>(query.Items));
         }
 
         #endregion
@@ -2888,7 +2954,18 @@ namespace DynamicData
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (destination == null) throw new ArgumentNullException(nameof(destination));
             if (updater == null) throw new ArgumentNullException(nameof(updater));
-            return source.Do(changes => updater.Adapt(changes, destination));
+
+            return Observable.Create<IChangeSet<TObject, TKey>>(observer =>
+            {
+                var locker = new object();
+                return source
+                    .Synchronize(locker)
+                    .Select(changes =>
+                    {
+                        updater.Adapt(changes, destination);
+                        return changes;
+                    }).SubscribeSafe(observer);
+            });
         }
 
         /// <summary>
@@ -2928,7 +3005,17 @@ namespace DynamicData
             if (destination == null) throw new ArgumentNullException(nameof(destination));
             if (updater == null) throw new ArgumentNullException(nameof(updater));
 
-            return source.Do(changes => updater.Adapt(changes, destination));
+            return Observable.Create<ISortedChangeSet<TObject, TKey>>(observer =>
+            {
+                var locker = new object();
+                return source
+                    .Synchronize(locker)
+                    .Select(changes =>
+                    {
+                        updater.Adapt(changes, destination);
+                        return changes;
+                    }).SubscribeSafe(observer);
+            });
         }
 
         /// <summary>

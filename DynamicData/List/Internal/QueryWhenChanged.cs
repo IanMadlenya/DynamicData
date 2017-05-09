@@ -12,8 +12,7 @@ namespace DynamicData.List.Internal
 
         public QueryWhenChanged([NotNull] IObservable<IChangeSet<T>> source)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            _source = source;
+            _source = source ?? throw new ArgumentNullException(nameof(source));
         }
 
         public IObservable<IReadOnlyCollection<T>> Run()
@@ -23,7 +22,7 @@ namespace DynamicData.List.Internal
                     list.Clone(changes);
                     return list;
                 }
-            ).Select(list => new ReadOnlyCollectionLight<T>(list, list.Count));
+            ).Select(list => new ReadOnlyCollectionLight<T>(list));
         }
     }
 }
