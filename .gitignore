@@ -33,3 +33,4 @@ _ReSharper*/
 *.DotSettings
 DynamicData.sln.GhostDoc.xml
 UpgradeLog.htm
+/.vs
