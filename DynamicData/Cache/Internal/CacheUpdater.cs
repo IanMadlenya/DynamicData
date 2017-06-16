@@ -12,8 +12,7 @@ namespace DynamicData.Cache.Internal
 
         public CacheUpdater(ChangeAwareCache<TObject, TKey> cache, IKeySelector<TObject, TKey> keySelector = null)
         {
-            if (cache == null) throw new ArgumentNullException(nameof(cache));
-            _cache = cache;
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _keySelector = keySelector;
         }
 
@@ -103,35 +102,56 @@ namespace DynamicData.Cache.Internal
             _cache.AddOrUpdate(item, key);
         }
 
-        public void Evaluate()
+        public void Refresh()
         {
-            _cache.Evaluate();
+            _cache.Refresh();
         }
 
-        public void Evaluate(IEnumerable<TObject> items)
+        public void Refresh(IEnumerable<TObject> items)
         {
             if (items == null) throw new ArgumentNullException(nameof(items));
-            items.ForEach(Evaluate);
+            items.ForEach(Refresh);
         }
 
-        public void Evaluate(IEnumerable<TKey> keys)
+        public void Refresh(IEnumerable<TKey> keys)
         {
             if (keys == null) throw new ArgumentNullException(nameof(keys));
-            keys.ForEach(Evaluate);
+            keys.ForEach(Refresh);
         }
 
-        public void Evaluate(TObject item)
+        public void Refresh(TObject item)
         {
             if (_keySelector == null)
                 throw new KeySelectorException("A key selector must be specified");
 
             var key = _keySelector.GetKey(item);
-            _cache.Evaluate(key);
+            _cache.Refresh(key);
         }
 
+        [Obsolete(Constants.EvaluateIsDead)]
+        public void Evaluate(IEnumerable<TKey> keys) => Refresh(keys);
+
+        [Obsolete(Constants.EvaluateIsDead)]
+        public void Evaluate(IEnumerable<TObject> items) => Refresh(items);
+
+        [Obsolete(Constants.EvaluateIsDead)]
+        public void Evaluate(TObject item) => Refresh(item);
+
+        public void Refresh(TKey key)
+        {
+            _cache.Refresh(key);
+        }
+
+        [Obsolete(Constants.EvaluateIsDead)]
+        public void Evaluate()
+        {
+            Refresh();
+        }
+
+        [Obsolete(Constants.EvaluateIsDead)]
         public void Evaluate(TKey key)
         {
-            _cache.Evaluate(key);
+            Refresh(key);
         }
 
         public void Remove(IEnumerable<TObject> items)

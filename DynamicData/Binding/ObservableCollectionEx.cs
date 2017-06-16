@@ -86,9 +86,10 @@ namespace DynamicData.Binding
         /// <typeparam name="T">The type of the object.</typeparam>
         /// <typeparam name="TCollection"></typeparam>
         /// <param name="source">The source.</param>
+        /// <param name="includeInitial">Should the initial changes be included in the results  set</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">source</exception>
-        public static IObservable<IChangeSet<T>> ToObservableChangeSet<TCollection, T>(this TCollection source)
+        public static IObservable<IChangeSet<T>> ToObservableChangeSet<TCollection, T>(this TCollection source, bool includeInitial = true)
             where TCollection : INotifyCollectionChanged, IEnumerable<T>
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
@@ -96,11 +97,10 @@ namespace DynamicData.Binding
                 (
                     observer =>
                     {
-                        Func<ChangeSet<T>> initialChangeSet = () =>
+                        ChangeSet<T> InitialChangeSet()
                         {
-                            var initial = new Change<T>(ListChangeReason.AddRange, source.ToList());
-                            return new ChangeSet<T>() { initial };
-                        };
+                            return new ChangeSet<T>() { new Change<T>(ListChangeReason.AddRange, source.ToList()) };
+                        }
 
                         //populate local cache, otherwise there is no way to deal with a reset
                         var cloneOfList = new SourceList<T>();
@@ -136,7 +136,7 @@ namespace DynamicData.Binding
                                         case NotifyCollectionChangedAction.Reset:
                                             var cleared = new Change<T>(ListChangeReason.Clear, cloneOfList.Items.ToList(), 0);
                                             var clearedChangeSet = new ChangeSet<T>() { cleared };
-                                            return clearedChangeSet.Concat(initialChangeSet());
+                                            return clearedChangeSet.Concat(InitialChangeSet());
 
                                         case NotifyCollectionChangedAction.Move:
                                             var item = changes.NewItems.OfType<T>().First();
@@ -150,9 +150,12 @@ namespace DynamicData.Binding
                             .Where(updates => updates != null)
                             .Select(updates => (IChangeSet<T>)new ChangeSet<T>(updates));
 
-                        var cacheLoader = Observable.Defer(()=>Observable.Return(initialChangeSet()))
-                                                .Concat(sourceUpdates)
-                                                .PopulateInto(cloneOfList);
+
+                        var changed = includeInitial
+                            ? Observable.Defer(() => Observable.Return(InitialChangeSet())).Concat(sourceUpdates)
+                            : sourceUpdates;
+
+                        var cacheLoader = changed.PopulateInto(cloneOfList);
 
                         var subscriber = cloneOfList.Connect().SubscribeSafe(observer);
                         return new CompositeDisposable(cacheLoader, subscriber, cloneOfList);

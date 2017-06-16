@@ -9,13 +9,6 @@ namespace DynamicData.Cache.Internal
         private readonly TObject _item;
         private readonly TKey _key;
 
-        public SubscriptionContainer(TObject item, TKey key, Func<TObject, IDisposable> subsriber)
-        {
-            _item = item;
-            _key = key;
-            _cleanUp = subsriber(item);
-        }
-
         public SubscriptionContainer(TObject item, TKey key, Func<TObject, TKey, IDisposable> subsriber)
         {
             _item = item;
@@ -64,7 +57,7 @@ namespace DynamicData.Cache.Internal
 
         public override string ToString()
         {
-            return string.Format("Key: {0}, Item: {1}", _key, _item);
+            return $"Key: {_key}, Item: {_item}";
         }
     }
 }

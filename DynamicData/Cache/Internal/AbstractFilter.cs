@@ -10,8 +10,7 @@ namespace DynamicData.Cache.Internal
 
         protected AbstractFilter(ChangeAwareCache<TObject, TKey> cache, Func<TObject, bool> filter)
         {
-            if (cache == null) throw new ArgumentNullException(nameof(cache));
-            _cache = cache;
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
 
             if (filter == null)
             {
@@ -25,11 +24,11 @@ namespace DynamicData.Cache.Internal
 
         public Func<TObject, bool> Filter { get; }
 
-        public IChangeSet<TObject, TKey> Evaluate(IEnumerable<KeyValuePair<TKey, TObject>> items)
+        public IChangeSet<TObject, TKey> Refresh(IEnumerable<KeyValuePair<TKey, TObject>> items)
         {
             //this is an internal method only so we can be sure there are no duplicate keys in the result
             //(therefore safe to parallelise)
-            Func<KeyValuePair<TKey, TObject>, Optional<Change<TObject, TKey>>> factory = kv =>
+            Optional<Change<TObject, TKey>> Factory(KeyValuePair<TKey, TObject> kv)
             {
                 var exisiting = _cache.Lookup(kv.Key);
                 var matches = Filter(kv.Value);
@@ -46,16 +45,16 @@ namespace DynamicData.Cache.Internal
                 }
 
                 return Optional.None<Change<TObject, TKey>>();
-            };
+            }
 
-            var result = Evaluate(items, factory);
+            var result = Refresh(items, Factory);
             _cache.Clone(new ChangeSet<TObject, TKey>(result));
 
 
             return _cache.CaptureChanges();
         }
 
-        protected abstract IEnumerable<Change<TObject, TKey>> Evaluate(IEnumerable<KeyValuePair<TKey, TObject>> items, Func<KeyValuePair<TKey, TObject>, Optional<Change<TObject, TKey>>> factory);
+        protected abstract IEnumerable<Change<TObject, TKey>> Refresh(IEnumerable<KeyValuePair<TKey, TObject>> items, Func<KeyValuePair<TKey, TObject>, Optional<Change<TObject, TKey>>> factory);
 
         public IChangeSet<TObject, TKey> Update(IChangeSet<TObject, TKey> updates)
         {
@@ -101,7 +100,7 @@ namespace DynamicData.Cache.Internal
                     case ChangeReason.Remove:
                         _cache.Remove(u.Key);
                         break;
-                    case ChangeReason.Evaluate:
+                    case ChangeReason.Refresh:
                         {
                             var exisiting = _cache.Lookup(key);
                             if (matches)
@@ -112,7 +111,7 @@ namespace DynamicData.Cache.Internal
                                 }
                                 else
                                 {
-                                    _cache.Evaluate();
+                                    _cache.Refresh();
                                 }
                             }
                             else

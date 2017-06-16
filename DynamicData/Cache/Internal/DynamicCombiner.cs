@@ -15,8 +15,7 @@ namespace DynamicData.Cache.Internal
 
         public DynamicCombiner([NotNull] IObservableList<IObservable<IChangeSet<TObject, TKey>>> source, CombineOperator type)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            _source = source;
+            _source = source ?? throw new ArgumentNullException(nameof(source));
             _type = type;
         }
 
@@ -103,8 +102,6 @@ namespace DynamicData.Cache.Internal
 
         private void ProcessItem(ChangeAwareCache<TObject, TKey> target, MergeContainer[] sourceLists, TObject item, TKey key)
         {
-            //TODO: Check whether individual items should be updated
-
             var cached = target.Lookup(key);
             var shouldBeInResult = MatchesConstraint(sourceLists, key);
 

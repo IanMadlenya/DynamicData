@@ -87,11 +87,12 @@
     <Compile Include="Binding\BindChangeSetFixture.cs" />
     <Compile Include="Binding\BindFromObservableListFixture.cs" />
     <Compile Include="Binding\BindSortedChangeSetFixture.cs" />
-    <Compile Include="Binding\ExpressionBuilderFixture.cs" />
+    <Compile Include="Binding\DeeplyNestedNotifyPropertyChangedFixture.cs" />
     <Compile Include="Binding\NotifyPropertyChangedExFixture.cs" />
     <Compile Include="Binding\ObservableCollectionExtendedToChangeSetFixture.cs" />
     <Compile Include="Binding\ObservableCollectionToChangeSetFixture.cs" />
     <Compile Include="Binding\ReadOnlyObservableCollectionToChangeSetFixture.cs" />
+    <Compile Include="CacheFixtures\AutoRefreshFixture.cs" />
     <Compile Include="CacheFixtures\DynamicAndFixture.cs" />
     <Compile Include="CacheFixtures\DynamicExceptFixture.cs" />
     <Compile Include="CacheFixtures\DynamicOrFixture.cs" />
@@ -119,6 +120,7 @@
     <Compile Include="CacheFixtures\SwitchFixture.cs" />
     <Compile Include="CacheFixtures\ToObservableChangeSetFixture.cs" />
     <Compile Include="CacheFixtures\TransformAsyncFixture.cs" />
+    <Compile Include="CacheFixtures\TransformManyObservableCacheFixture.cs" />
     <Compile Include="CacheFixtures\TransformManySimpleFixture.cs" />
     <Compile Include="CacheFixtures\TransformSafeAsyncFixture.cs" />
     <Compile Include="CacheFixtures\TransformTreeFixture.cs" />
@@ -187,6 +189,7 @@
     <Compile Include="CacheFixtures\MonitorStatusFixture.cs" />
     <Compile Include="CacheFixtures\TransformFixture.cs" />
     <Compile Include="ListFixtures\AndFixture.cs" />
+    <Compile Include="ListFixtures\AutoRefreshFixture.cs" />
     <Compile Include="ListFixtures\BatchFixture.cs" />
     <Compile Include="ListFixtures\CastFixture.cs" />
     <Compile Include="ListFixtures\CloneFixture.cs" />
@@ -236,6 +239,7 @@
     <Compile Include="ListFixtures\TransformAsyncFixture.cs" />
     <Compile Include="ListFixtures\TransformFixture.cs" />
     <Compile Include="ListFixtures\TransformManyFixture.cs" />
+    <Compile Include="ListFixtures\TransformManyObservableCollectionFixture.cs" />
     <Compile Include="ListFixtures\VirtualisationFixture.cs" />
     <Compile Include="ListFixtures\XOrFixture.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

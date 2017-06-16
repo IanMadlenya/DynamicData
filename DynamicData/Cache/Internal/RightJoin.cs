@@ -17,15 +17,10 @@ namespace DynamicData.Cache.Internal
             Func<TRight, TLeftKey> rightKeySelector,
             Func<TLeftKey, Optional<TLeft>, TRight, TDestination> resultSelector)
         {
-            if (left == null) throw new ArgumentNullException(nameof(left));
-            if (right == null) throw new ArgumentNullException(nameof(right));
-            if (rightKeySelector == null) throw new ArgumentNullException(nameof(rightKeySelector));
-            if (resultSelector == null) throw new ArgumentNullException(nameof(resultSelector));
-
-            _left = left;
-            _right = right;
-            _rightKeySelector = rightKeySelector;
-            _resultSelector = resultSelector;
+            _left = left ?? throw new ArgumentNullException(nameof(left));
+            _right = right ?? throw new ArgumentNullException(nameof(right));
+            _rightKeySelector = rightKeySelector ?? throw new ArgumentNullException(nameof(rightKeySelector));
+            _resultSelector = resultSelector ?? throw new ArgumentNullException(nameof(resultSelector));
         }
 
         public IObservable<IChangeSet<TDestination, TLeftKey>> Run()
@@ -61,9 +56,9 @@ namespace DynamicData.Cache.Internal
                                         //remove from result because a right value is expected
                                         innerCache.Remove(change.Key);
                                         break;
-                                    case ChangeReason.Evaluate:
+                                    case ChangeReason.Refresh:
                                         //propagate upstream
-                                        innerCache.Evaluate(change.Key);
+                                        innerCache.Refresh(change.Key);
                                         break;
                                 }
                             });
@@ -111,9 +106,9 @@ namespace DynamicData.Cache.Internal
                                             }
                                         }
                                         break;
-                                    case ChangeReason.Evaluate:
+                                    case ChangeReason.Refresh:
                                         //propagate upstream
-                                        innerCache.Evaluate(change.Key);
+                                        innerCache.Refresh(change.Key);
                                         break;
                                 }
                             });

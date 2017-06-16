@@ -12,11 +12,9 @@ namespace DynamicData
 
         public PageChangeSet(IChangeSet<T> virtualChangeSet, IPageResponse response)
         {
-            if (virtualChangeSet == null) throw new ArgumentNullException(nameof(virtualChangeSet));
-            if (response == null) throw new ArgumentNullException(nameof(response));
-            _virtualChangeSet = virtualChangeSet;
+            _virtualChangeSet = virtualChangeSet ?? throw new ArgumentNullException(nameof(virtualChangeSet));
 
-            Response = response;
+            Response = response ?? throw new ArgumentNullException(nameof(response));
         }
 
         public IPageResponse Response { get; }
@@ -34,13 +32,16 @@ namespace DynamicData
 
         int IChangeSet.Capacity
         {
-            get { return _virtualChangeSet.Capacity; }
-            set { _virtualChangeSet.Capacity = value; }
+            get => _virtualChangeSet.Capacity;
+            set => _virtualChangeSet.Capacity = value;
         }
 
         int IChangeSet<T>.Replaced => _virtualChangeSet.Replaced;
 
         int IChangeSet<T>.TotalChanges => _virtualChangeSet.TotalChanges;
+
+
+        public int Refreshes => _virtualChangeSet.Refreshes;
 
         #endregion
 

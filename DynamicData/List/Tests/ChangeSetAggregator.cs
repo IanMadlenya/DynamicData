@@ -4,6 +4,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DynamicData.Diagnostics;
 
+// ReSharper disable once CheckNamespace
 namespace DynamicData.Tests
 {
     /// <summary>
@@ -30,6 +31,7 @@ namespace DynamicData.Tests
             var results = published.Subscribe(updates => _messages.Add(updates), ex => _error = ex);
             var summariser = published.CollectUpdateStats().Subscribe(summary => _summary = summary);
             var connected = published.Connect();
+
 
             _disposer = Disposable.Create(() =>
             {

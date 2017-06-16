@@ -8,6 +8,7 @@ using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using DynamicData.Annotations;
 using DynamicData.Binding;
@@ -179,6 +180,70 @@ namespace DynamicData
             if (source == null) throw new ArgumentNullException(nameof(source));
             return new ToObservableChangeSet<T>(source, expireAfter, limitSizeTo, scheduler).Run();
         }
+
+        #endregion
+
+        #region Auto Refresh
+                        
+        /// <summary>
+        /// Automatically refresh downstream operators when properties change.
+        /// </summary>
+        /// <param name="source">The source observable</param>
+        /// <param name="propertyAccessor">Specify a property to observe changes. When it changes a Refresh is invoked</param>
+        /// <param name="changeSetBuffer">Batch up changes by specifying the buffer. This greatly increases performance when many elements have sucessive property changes</param>
+        /// <param name="propertyChangeThrottle">When observing on multiple property changes, apply a throttle to prevent excessive refesh invocations</param>
+        /// <param name="scheduler">The scheduler</param>
+        /// <returns>An observable change set with additional refresh changes</returns>
+        public static IObservable<IChangeSet<TObject>> AutoRefresh<TObject, TProperty>(this IObservable<IChangeSet<TObject>> source,
+            Expression<Func<TObject, TProperty>> propertyAccessor,
+            TimeSpan? changeSetBuffer = null,
+            TimeSpan? propertyChangeThrottle = null,
+            IScheduler scheduler = null)
+            where TObject : INotifyPropertyChanged
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (propertyAccessor == null) throw new ArgumentNullException(nameof(propertyAccessor));
+
+            return source.AutoRefresh(t =>
+            {
+                if (propertyChangeThrottle == null)
+                    return t.WhenPropertyChanged(propertyAccessor, false);
+
+                return t.WhenPropertyChanged(propertyAccessor,false)
+                    .Throttle(propertyChangeThrottle.Value, scheduler ?? Scheduler.Default);
+
+            }, changeSetBuffer, scheduler);
+        }
+
+        /// <summary>
+        /// Automatically refresh downstream operators when properties change.
+        /// </summary>
+        /// <param name="source">The source observable change set</param>
+        /// <param name="reevaluator">An observable which acts on items within the collection and produces a value when the item should be refreshed</param>
+        /// <param name="changeSetBuffer">Batch up changes by specifying the buffer. This greatly increases performance when many elements require a refresh</param>
+        /// <param name="scheduler">The scheduler</param>
+        /// <returns>An observable change set with additional refresh changes</returns>
+        public static IObservable<IChangeSet<TObject>> AutoRefresh<TObject, TAny>(this IObservable<IChangeSet<TObject>> source,
+            Func<TObject, IObservable<TAny>> reevaluator,
+            TimeSpan? changeSetBuffer = null,
+            IScheduler scheduler = null)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (reevaluator == null) throw new ArgumentNullException(nameof(reevaluator));
+            return new AutoRefresh<TObject, TAny>(source, reevaluator, changeSetBuffer, scheduler).Run();
+        }
+
+
+        /// <summary>
+        /// Supress  refresh notifications
+        /// </summary>
+        /// <param name="source">The source observable change set</param>
+        /// <returns></returns>
+        public static IObservable<IChangeSet<T>> SupressRefresh<T>(this IObservable<IChangeSet<T>> source)
+        {
+            return source.WhereReasonsAreNot(ListChangeReason.Refresh);
+        }
+
 
         #endregion
 
@@ -359,7 +424,19 @@ namespace DynamicData
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (adaptor == null) throw new ArgumentNullException(nameof(adaptor));
-            return source.Do(adaptor.Adapt);
+
+
+            return Observable.Create<IChangeSet<T>>(observer =>
+            {
+                var locker = new object();
+                return source
+                    .Synchronize(locker)
+                    .Select(changes =>
+                    {
+                        adaptor.Adapt(changes);
+                        return changes;
+                    }).SubscribeSafe(observer);
+            });
         }
 
         #endregion
@@ -446,7 +523,7 @@ namespace DynamicData
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (predicate == null) throw new ArgumentNullException(nameof(predicate));
-            return new ImmutableFilter<T>(source, predicate).Run();
+            return new Filter<T>(source, new BehaviorSubject<Func<T, bool>>(predicate)).Run();
         }
 
         /// <summary>
@@ -484,7 +561,7 @@ namespace DynamicData
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (predicate == null) throw new ArgumentNullException(nameof(predicate));
 
-            return new MutableFilter<T>(source, predicate).Run();
+            return new Filter<T>(source, predicate).Run();
         }
 
 
@@ -503,8 +580,7 @@ namespace DynamicData
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
-        public static IObservable<IChangeSet<TObject>> FilterOnProperty<TObject, TProperty>(
-            this IObservable<IChangeSet<TObject>> source,
+        public static IObservable<IChangeSet<TObject>> FilterOnProperty<TObject, TProperty>(this IObservable<IChangeSet<TObject>> source,
             Expression<Func<TObject, TProperty>> propertySelector,
             Func<TObject, bool> predicate,
             TimeSpan? propertyChangedThrottle = null,
@@ -544,19 +620,20 @@ namespace DynamicData
         /// <typeparam name="TDestination">The type of the destination.</typeparam>
         /// <param name="source">The source.</param>
         /// <param name="transformFactory">The transform factory.</param>
+        /// <param name="transformOnRefresh">Should a new transform be applied when a refresh event is received</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">
         /// source
         /// or
         /// valueSelector
         /// </exception>
-        public static IObservable<IChangeSet<TDestination>> Transform<TSource, TDestination>(
-            this IObservable<IChangeSet<TSource>> source, Func<TSource, TDestination> transformFactory)
+        public static IObservable<IChangeSet<TDestination>> Transform<TSource, TDestination>(this IObservable<IChangeSet<TSource>> source, 
+            Func<TSource, TDestination> transformFactory,
+            bool transformOnRefresh = false)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
-
-            return new Transformer<TSource, TDestination>(source, transformFactory).Run();
+            return source.Transform<TSource, TDestination>((t, previous, idx) => transformFactory(t), transformOnRefresh);
         }
 
         /// <summary>
@@ -565,8 +642,84 @@ namespace DynamicData
         /// <typeparam name="TSource">The type of the source.</typeparam>
         /// <typeparam name="TDestination">The type of the destination.</typeparam>
         /// <param name="source">The source.</param>
+        /// <param name="transformFactory">The transform fuunction</param>
+        /// <param name="transformOnRefresh">Should a new transform be applied when a refresh event is received</param>
+        /// <returns>A an observable changeset of the transformed object</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// source
+        /// or
+        /// valueSelector
+        /// </exception>
+        public static IObservable<IChangeSet<TDestination>> Transform<TSource, TDestination>(this IObservable<IChangeSet<TSource>> source, 
+            Func<TSource, int, TDestination> transformFactory,
+            bool transformOnRefresh = false)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
+
+            return source.Transform<TSource, TDestination>((t, previous, idx) => transformFactory(t,idx),transformOnRefresh);
+        }
+
+        /// <summary>
+        /// Projects each update item to a new form using the specified transform function.
+        /// 
+        /// *** Annoyingly when using this overload you will have to explicitly specify the generic type arguments as type inference fails
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source.</typeparam>
+        /// <typeparam name="TDestination">The type of the destination.</typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="transformFactory">The transform fuunction</param>
+        /// <param name="transformOnRefresh">Should a new transform be applied when a refresh event is received</param>
+        /// <returns>A an observable changeset of the transformed object</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// source
+        /// or
+        /// valueSelector
+        /// </exception>
+        public static IObservable<IChangeSet<TDestination>> Transform<TSource, TDestination>(this IObservable<IChangeSet<TSource>> source,
+            Func<TSource, Optional<TDestination>, TDestination> transformFactory,
+            bool transformOnRefresh = false)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
+
+            return source.Transform<TSource, TDestination>((t, previous, idx) => transformFactory(t, previous), transformOnRefresh);
+        }
+
+        /// <summary>
+        /// Projects each update item to a new form using the specified transform function
+        /// 
+        /// *** Annoyingly when using this overload you will have to explicy specify the generic type arguments as type inference fails
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source.</typeparam>
+        /// <typeparam name="TDestination">The type of the destination.</typeparam>
+        /// <param name="source">The source.</param>
         /// <param name="transformFactory">The transform factory.</param>
-        /// <returns></returns>
+        /// <param name="transformOnRefresh">Should a new transform be applied when a refresh event is received</param>
+        /// <returns>A an observable changeset of the transformed object</returns>
+        /// <exception cref="System.ArgumentNullException">
+        /// source
+        /// or
+        /// valueSelector
+        /// </exception>
+        public static IObservable<IChangeSet<TDestination>> Transform<TSource, TDestination>(this IObservable<IChangeSet<TSource>> source,
+            Func<TSource, Optional<TDestination>, int, TDestination> transformFactory, bool transformOnRefresh = false)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+            if (transformFactory == null) throw new ArgumentNullException(nameof(transformFactory));
+
+            return new Transformer<TSource, TDestination>(source, transformFactory, transformOnRefresh).Run();
+        }
+
+
+        /// <summary>
+        /// Projects each update item to a new form using the specified transform function
+        /// </summary>
+        /// <typeparam name="TSource">The type of the source.</typeparam>
+        /// <typeparam name="TDestination">The type of the destination.</typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="transformFactory">The transform factory.</param>
+        /// <returns>A an observable changeset of the transformed object</returns>
         /// <exception cref="System.ArgumentNullException">
         /// source
         /// or
@@ -583,7 +736,6 @@ namespace DynamicData
 
         /// <summary>
         /// Equivalent to a select many transform. To work, the key must individually identify each child.
-        /// **** Assumes each child can only have one  parent - support for children with multiple parents is a work in progresss
         /// </summary>
         /// <typeparam name="TDestination">The type of the destination.</typeparam>
         /// <typeparam name="TSource">The type of the source.</typeparam>
@@ -596,8 +748,7 @@ namespace DynamicData
         /// or
         /// manyselector
         /// </exception>
-        public static IObservable<IChangeSet<TDestination>> TransformMany<TDestination, TSource>(
-            [NotNull] this IObservable<IChangeSet<TSource>> source,
+        public static IObservable<IChangeSet<TDestination>> TransformMany<TDestination, TSource>( [NotNull] this IObservable<IChangeSet<TSource>> source,
             [NotNull] Func<TSource, IEnumerable<TDestination>> manyselector,
             IEqualityComparer<TDestination> equalityComparer = null)
         {
@@ -605,6 +756,39 @@ namespace DynamicData
             if (manyselector == null) throw new ArgumentNullException(nameof(manyselector));
             return new TransformMany<TSource, TDestination>(source, manyselector, equalityComparer).Run();
         }
+
+         /// <summary>
+        /// Flatten the nested observable collection, and  observe subsequentl observable collection changes
+        /// </summary>
+        /// <typeparam name="TDestination">The type of the destination.</typeparam>
+        /// <typeparam name="TSource">The type of the source.</typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="manyselector">The manyselector.</param>
+        /// <param name="equalityComparer">Used when an item has been replaced to determine whether child items are the same as previous children</param>
+        public static IObservable<IChangeSet<TDestination>> TransformMany<TDestination, TSource>( this IObservable<IChangeSet<TSource>> source,
+            Func<TSource, ObservableCollection<TDestination>> manyselector,
+            IEqualityComparer<TDestination> equalityComparer = null)
+        {
+            return new TransformMany<TSource, TDestination>(source,manyselector, equalityComparer,t => manyselector(t).ToObservableChangeSet()).Run();
+        }
+
+        /// <summary>
+        /// Flatten the nested observable collection, and  observe subsequentl observable collection changes
+        /// </summary>
+        /// <typeparam name="TDestination">The type of the destination.</typeparam>
+        /// <typeparam name="TSource">The type of the source.</typeparam>
+        /// <param name="source">The source.</param>
+        /// <param name="manyselector">The manyselector.</param>
+        /// <param name="equalityComparer">Used when an item has been replaced to determine whether child items are the same as previous children</param>
+        public static IObservable<IChangeSet<TDestination>> TransformMany<TDestination, TSource>(this IObservable<IChangeSet<TSource>> source,
+            Func<TSource, ReadOnlyObservableCollection<TDestination>> manyselector,
+            IEqualityComparer<TDestination> equalityComparer = null)
+        {
+            return new TransformMany<TSource, TDestination>(source, manyselector, equalityComparer, t => manyselector(t).ToObservableChangeSet()).Run();
+        }
+
+
+
 
         /// <summary>
         /// Selects distinct values from the source, using the specified value selector
@@ -721,8 +905,7 @@ namespace DynamicData
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
-        public static IObservable<IChangeSet<List.IGrouping<TObject, TGroup>>> GroupOnPropertyWithImmutableState
-            <TObject, TGroup>(this IObservable<IChangeSet<TObject>> source,
+        public static IObservable<IChangeSet<List.IGrouping<TObject, TGroup>>> GroupOnPropertyWithImmutableState<TObject, TGroup>(this IObservable<IChangeSet<TObject>> source,
                 Expression<Func<TObject, TGroup>> propertySelector,
                 TimeSpan? propertyChangedThrottle = null,
                 IScheduler scheduler = null)
@@ -730,9 +913,7 @@ namespace DynamicData
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (propertySelector == null) throw new ArgumentNullException(nameof(propertySelector));
-            return
-                new GroupOnPropertyWithImmutableState<TObject, TGroup>(source, propertySelector, propertyChangedThrottle,
-                    scheduler).Run();
+            return     new GroupOnPropertyWithImmutableState<TObject, TGroup>(source, propertySelector, propertyChangedThrottle, scheduler).Run();
         }
 
         /// <summary>
@@ -902,10 +1083,8 @@ namespace DynamicData
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (propertyAccessor == null) throw new ArgumentNullException(nameof(propertyAccessor));
 
-            var member = propertyAccessor.GetProperty();
-            var accessor = propertyAccessor.Compile();
-
-            return source.MergeMany(t => t.WhenValueChanged(accessor, member.Name, notifyOnInitialValue));
+            var factory = propertyAccessor.GetFactory();
+            return source.MergeMany(t => factory(t, notifyOnInitialValue).Select(pv=>pv.Value));
         }
 
         /// <summary>
@@ -928,10 +1107,8 @@ namespace DynamicData
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (propertyAccessor == null) throw new ArgumentNullException(nameof(propertyAccessor));
 
-            var member = propertyAccessor.GetProperty();
-            var accessor = propertyAccessor.Compile();
-
-            return source.MergeMany(t => t.WhenPropertyChanged(accessor, member.Name, notifyOnInitialValue));
+            var factory = propertyAccessor.GetFactory();
+            return source.MergeMany(t => factory(t, notifyOnInitialValue));
         }
 
         /// <summary>
@@ -939,16 +1116,15 @@ namespace DynamicData
         /// </summary>
         /// <typeparam name="TObject">The type of the object.</typeparam>
         /// <param name="source">The source.</param>
+        /// <param name="propertiesToMonitor">specify properties to Monitor, or omit to monitor all property changes</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">
         /// </exception>
-        public static IObservable<TObject> WhenAnyPropertyChanged<TObject>(
-            [NotNull] this IObservable<IChangeSet<TObject>> source)
+        public static IObservable<TObject> WhenAnyPropertyChanged<TObject>([NotNull] this IObservable<IChangeSet<TObject>> source, params string[] propertiesToMonitor)
             where TObject : INotifyPropertyChanged
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
-
-            return source.MergeMany(t => t.WhenAnyPropertyChanged());
+            return source.MergeMany(t => t.WhenAnyPropertyChanged(propertiesToMonitor));
         }
 
         /// <summary>
@@ -1204,8 +1380,7 @@ namespace DynamicData
         /// <param name="source">The source.</param>
         /// <returns></returns>
         /// <exception cref="System.ArgumentNullException">source</exception>
-        public static IObservable<IReadOnlyCollection<T>> QueryWhenChanged<T>(
-            [NotNull] this IObservable<IChangeSet<T>> source)
+        public static IObservable<IReadOnlyCollection<T>> QueryWhenChanged<T>([NotNull] this IObservable<IChangeSet<T>> source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             return new QueryWhenChanged<T>(source).Run();
@@ -1217,8 +1392,7 @@ namespace DynamicData
         /// <typeparam name="TObject">The type of the object.</typeparam>
         /// <param name="source">The source.</param>
         /// <returns></returns>
-        public static IObservable<IReadOnlyCollection<TObject>> ToCollection<TObject>(
-            this IObservable<IChangeSet<TObject>> source)
+        public static IObservable<IReadOnlyCollection<TObject>> ToCollection<TObject>(this IObservable<IChangeSet<TObject>> source)
         {
             return source.QueryWhenChanged(items => items);
         }
@@ -1759,6 +1933,21 @@ namespace DynamicData
             if (sources == null) throw new ArgumentNullException(nameof(sources));
             return new Switch<T>(sources).Run();
         }
+
+        #endregion
+
+
+        #region Start with
+
+        /// <summary>
+        /// Prepends an empty changeset to the source
+        /// </summary>
+        public static IObservable<IChangeSet<T>> StartWithEmpty<T>(this IObservable<IChangeSet<T>> source)
+        {
+            return source.StartWith(ChangeSet<T>.Empty);
+        }
+
+
 
         #endregion
     }

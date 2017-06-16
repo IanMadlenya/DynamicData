@@ -3,7 +3,6 @@ using System.Linq;
 using System.Reactive.Linq;
 using DynamicData.Cache.Internal;
 
-// ReSharper disable once CheckNamespace
 namespace DynamicData.Cache
 {
     internal sealed class Virtualise<TObject, TKey>
@@ -14,11 +13,8 @@ namespace DynamicData.Cache
         public Virtualise(IObservable<ISortedChangeSet<TObject, TKey>> source,
             IObservable<IVirtualRequest> virtualRequests)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (virtualRequests == null) throw new ArgumentNullException(nameof(virtualRequests));
-
-            _source = source;
-            _virtualRequests = virtualRequests;
+            _source = source ?? throw new ArgumentNullException(nameof(source));
+            _virtualRequests = virtualRequests ?? throw new ArgumentNullException(nameof(virtualRequests));
         }
 
         public IObservable<IVirtualChangeSet<TObject, TKey>> Run()

@@ -15,11 +15,8 @@ namespace DynamicData.Cache.Internal
 
         public GroupOnImmutable(IObservable<IChangeSet<TObject, TKey>> source, Func<TObject, TGroupKey> groupSelectorKey, IObservable<Unit> regrouper)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            if (groupSelectorKey == null) throw new ArgumentNullException(nameof(groupSelectorKey));
-
-            _source = source;
-            _groupSelectorKey = groupSelectorKey;
+            _source = source ?? throw new ArgumentNullException(nameof(source));
+            _groupSelectorKey = groupSelectorKey ?? throw new ArgumentNullException(nameof(groupSelectorKey));
             _regrouper = regrouper ?? Observable.Never<Unit>();
         }
 
@@ -64,7 +61,7 @@ namespace DynamicData.Cache.Internal
             public IImmutableGroupChangeSet<TObject, TKey, TGroupKey> Regroup()
             {
                 //re-evaluate all items in the group
-                var items = _itemCache.Select(item => new Change<TObject, TKey>(ChangeReason.Evaluate, item.Key, item.Value.Item));
+                var items = _itemCache.Select(item => new Change<TObject, TKey>(ChangeReason.Refresh, item.Key, item.Value.Item));
                 return HandleUpdates(new ChangeSet<TObject, TKey>(items));
             }
 
@@ -133,7 +130,7 @@ namespace DynamicData.Cache.Internal
 
                                 break;
                             }
-                            case ChangeReason.Evaluate:
+                            case ChangeReason.Refresh:
                             {
                                 //check whether the previous item was in a different group. If so remove from old group
                                 var previous = _itemCache.Lookup(current.Key);

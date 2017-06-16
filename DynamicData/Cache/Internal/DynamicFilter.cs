@@ -17,8 +17,7 @@ namespace DynamicData.Cache.Internal
             IObservable<Func<TObject, bool>> predicateChanged,
             IObservable<Unit> refilterObservable = null)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-            _source = source;
+            _source = source ?? throw new ArgumentNullException(nameof(source));
             _predicateChanged = predicateChanged ?? Observable.Never<Func<TObject, bool>>();
             _refilterObservable = refilterObservable ?? Observable.Never<Unit>();
         }
@@ -61,7 +60,7 @@ namespace DynamicData.Cache.Internal
         private IChangeSet<TObject, TKey> Reevaluate(FilteredUpdater<TObject, TKey> updater,
             IEnumerable<KeyValuePair<TKey, TObject>> items)
         {
-            var result = updater.Evaluate(items);
+            var result = updater.Refresh(items);
             var changes = result.Where(u => u.Reason == ChangeReason.Add || u.Reason == ChangeReason.Remove);
             return new ChangeSet<TObject, TKey>(changes);
         }

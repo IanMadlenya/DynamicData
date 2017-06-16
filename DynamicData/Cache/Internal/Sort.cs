@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reactive;
 using System.Reactive.Linq;
-using DynamicData.Kernel;
 
 namespace DynamicData.Cache.Internal
 {
@@ -24,11 +23,10 @@ namespace DynamicData.Cache.Internal
             IObservable<Unit> resorter = null,
             int resetThreshold = -1)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
             if (comparer == null && comparerChangedObservable == null)
                 throw new ArgumentException("Must specify comparer or comparerChangedObservable");
 
-            _source = source;
+            _source = source ?? throw new ArgumentNullException(nameof(source));
             _comparer = comparer;
             _sortOptimisations = sortOptimisations;
             _resorter = resorter;
@@ -153,7 +151,6 @@ namespace DynamicData.Cache.Internal
                     sortReason = SortReason.Reset;
                 }
 
-                //TODO: Create a sorted cache (could create an sorted observable list perhaps?)
                 IChangeSet<TObject, TKey> changeSet;
                 switch (sortReason)
                 {
